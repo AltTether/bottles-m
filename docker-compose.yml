@@ -2,14 +2,5 @@ version: '3'
 services:
   server:
     build: ./
-    ports:
-      - 8080:8080
     volumes:
-      - ./message/:/go/src/github.com/message
-      - ./clients/:/go/src/github.com/clients
-    dns:
-      - 8.8.8.8
-    command: ['go', 'run', 'app.go']
-    env_file: .env
-    links:
-      - mysql
+      - ./:/go/src/github.com/bottles
