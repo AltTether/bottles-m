@@ -1,7 +1,7 @@
 version: '3'
 services:
-  message:
-    build: ./message
+  server:
+    build: ./
     ports:
       - 8080:8080
     volumes:
@@ -13,60 +13,3 @@ services:
     env_file: .env
     links:
       - mysql
-
-  mysql:
-    image: mysql:8.0.20
-    command: --default-authentication-plugin=mysql_native_password
-    volumes:
-      - ./db/mysql/data:/var/lib/mysql
-      - ./db/mysql/init:/docker-entrypoint-initdb.d
-    restart: always
-    env_file: .env
-    ports:
-      - 3306:3306
-
-  token:
-    build: ./token
-    env_file: .env
-    dns:
-      - 8.8.8.8
-    command: ['go', 'run', 'app.go']
-    volumes:
-      - ./token/:/go/src/github.com/token
-    links:
-      - redis
-    ports:
-      - 9090:8080
-
-  redis:
-    image: redis:6.0.5-alpine
-    ports:
-      - 6379:6379
-
-  manager:
-    build: ./manager
-    volumes:
-      - ./manager/:/go/src/github.com/manager
-      - ./clients/:/go/src/github.com/clients
-      - ./front/dist/:/go/src/github.com/manager/public
-    env_file: .env
-    dns:
-      - 8.8.8.8
-    command: ['go', 'run', 'app.go']
-    links:
-      - token
-      - message
-    ports:
-      - 10010:8080
-
-  generator:
-    build: ./generator
-    env_file: .env
-    volumes:
-      - ./generator/:/go/src/github.com/generator
-      - ./clients/:/go/src/github.com/clients
-    dns:
-      - 8.8.8.8
-    command: ['go', 'run', 'app.go']
-    links:
-      - message
