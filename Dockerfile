@@ -8,3 +8,5 @@ WORKDIR /go/src/github.com/bottles
 COPY ./go.mod /go/src/github.com/bottles
 COPY ./go.sum /go/src/github.com/bottles
 RUN go mod download
+
+CMD ["go", "run", "app.go"]
