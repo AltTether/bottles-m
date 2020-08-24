@@ -3,47 +3,45 @@ package composer
 import (
 	"fmt"
 	"testing"
+	
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	defaultText = "This is a Message"
-	defaultMessage = &Message{
-		Text: &defaultText,
-	}
 
-	defaultTokenStr = "ToKEN"
-	defaultToken = &Token{
-		Str: &defaultTokenStr,
+func defaultBottle() *Bottle {
+	text := "This is a Test Message"
+	message := &Message{
+		Text: &text,
 	}
-
-	defaultBottle = &Bottle{
-		Message: defaultMessage,
-		Token:   defaultToken,
+	bottle := &Bottle{
+		Message: message,
 	}
-)
+	return bottle;
+}
 
 func TestProcessor(t *testing.T) {
-	processor:= New()
+	processor := New()
 
-	processedBottle, _ := processor.Run(defaultBottle)
+	bottle := defaultBottle()
+	processedBottle, _ := processor.Run(bottle)
 
-	assert.Equal(t, processedBottle, defaultBottle)
+	assert.Equal(t, processedBottle, bottle)
 }
 
 func TestProcessFunc1(t *testing.T) {
 	processor := New()
 
-	replaceToken := "TOken"
-	tokenReplacer := func(b *Bottle) (*Bottle, error) {
-		b.Token.Str = &replaceToken
+	replaceMessage := "replaced"
+	messageReplacer := func(b *Bottle) (*Bottle, error) {
+		b.Message.Text = &replaceMessage
 		return b, nil
 	}
-	processor.Use(tokenReplacer)
+	processor.Use(messageReplacer)
 
-	processedBottle, _ := processor.Run(defaultBottle)
+	bottle := defaultBottle()
+	processedBottle, _ := processor.Run(bottle)
 
-	assert.Equal(t, *processedBottle.Token.Str, replaceToken)
+	assert.Equal(t, *processedBottle.Message.Text, replaceMessage)
 }
 
 func TestProcessFuncError(t *testing.T) {
@@ -60,7 +58,8 @@ func TestProcessFuncError(t *testing.T) {
 	processor.Use(processFunc1)
 	processor.Use(processFunc2)
 
-	processedBottle, err := processor.Run(defaultBottle)
+	bottle := defaultBottle()
+	processedBottle, err := processor.Run(bottle)
 
 	if err != nil {
 		assert.NotEqual(t,
@@ -68,6 +67,6 @@ func TestProcessFuncError(t *testing.T) {
 			"Func2")
 		assert.Equal(t,
 			*processedBottle.Message.Text,
-			"This is a Message")
+			"This is a Test Message")
 	}
 }
