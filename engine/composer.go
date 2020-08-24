@@ -2,6 +2,7 @@ package composer
 
 import ()
 
+
 type Message struct {
 	Text *string
 }
@@ -15,23 +16,23 @@ type Bottle struct {
 	Token   *Token
 }
 
-type ComponentFunc func(*Bottle) *Bottle
+type ProcessFunc func(*Bottle) *Bottle
 
-type Composer struct {
-	components []ComponentFunc
+type Processor struct {
+	processFuncs []ProcessFunc
 }
 
-func New() *Composer {
-	return &Composer{}
+func New() *Processor {
+	return &Processor{}
 }
 
-func (c *Composer) Run(b *Bottle) *Bottle {
-	for _, component := range c.components {
-		b = component(b)
+func (c *Processor) Run(b *Bottle) *Bottle {
+	for _, f := range c.processFuncs {
+		b = f(b)
 	}
 	return b
 }
 
-func (c *Composer) Use(f ComponentFunc) {
-	c.components = append(c.components, f)
+func (c *Processor) Use(f ProcessFunc) {
+	c.processFuncs = append(c.processFuncs, f)
 }

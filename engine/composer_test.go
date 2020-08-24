@@ -22,25 +22,25 @@ var (
 	}
 )
 
-func TestConposer(t *testing.T) {
-	composer := New()
+func TestProcessor(t *testing.T) {
+	processor:= New()
 
-	composedB := composer.Run(defaultBottle)
+	processedBottle := processor.Run(defaultBottle)
 
-	assert.Equal(t, composedB, defaultBottle)
+	assert.Equal(t, processedBottle, defaultBottle)
 }
 
-func TestComposerRun1(t *testing.T) {
-	composer := New()
+func TestProcessFunc1(t *testing.T) {
+	processor := New()
 
 	replaceToken := "TOken"
 	tokenReplacer := func(b *Bottle) *Bottle {
 		b.Token.Str = &replaceToken
 		return b
 	}
-	composer.Use(tokenReplacer)
+	processor.Use(tokenReplacer)
 
-	composedB := composer.Run(defaultBottle)
+	processedBottle := processor.Run(defaultBottle)
 
-	assert.Equal(t, *composedB.Token.Str, replaceToken)
+	assert.Equal(t, *processedBottle.Token.Str, replaceToken)
 }
