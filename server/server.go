@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,21 +23,20 @@ func New() *gin.Engine {
 
 	messagePool := pool.NewMessagePool()
 
-	messageAdder := func(b *engine.Bottle) (*engine.Bottle, error) {
+	messageAdder := func(b *engine.Bottle) (error) {
 		messagePool.Add(b.Message)
-		return b, nil
+		return nil
 	}
 	postProcessor.Use(messageAdder)
 	
-	messageGetter := func(b *engine.Bottle) (*engine.Bottle, error) {
+	messageGetter := func(b *engine.Bottle) (error) {
 		message, err := messagePool.Get()
 		if err != nil {
-			return b, err
+			return err
 		}
-		fmt.Printf("%v", message)
 		b.Message = message
 
-		return b, nil
+		return nil
 	}
 	getProcessor.Use(messageGetter)
 
@@ -46,7 +44,7 @@ func New() *gin.Engine {
 	{
 		v1.GET("/bottle", func(c *gin.Context) {
 			bottle := &engine.Bottle{}
-			bottle, err := getProcessor.Run(bottle)
+			err := getProcessor.Run(bottle)
 			if err != nil {
 				c.Status(http.StatusBadRequest)
 				return
@@ -65,14 +63,13 @@ func New() *gin.Engine {
 				return
 			}
 
-			text := "hoge"
 			bottle := &engine.Bottle{
 				Message: &engine.Message{
-					Text: &text,
+					Text: body.Message,
 				},
 			}
 
-			bottle, err := postProcessor.Run(bottle)
+			err := postProcessor.Run(bottle)
 			if err != nil {
 				c.Status(http.StatusBadRequest)
 			}

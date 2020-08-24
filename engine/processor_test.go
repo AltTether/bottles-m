@@ -23,9 +23,11 @@ func TestProcessor(t *testing.T) {
 	processor := New()
 
 	bottle := defaultBottle()
-	processedBottle, _ := processor.Run(bottle)
+	_ = processor.Run(bottle)
 
-	assert.Equal(t, processedBottle, bottle)
+	assert.Equal(t,
+		"This is a Test Message",
+		*bottle.Message.Text)
 }
 
 func TestProcessFunc1(t *testing.T) {
@@ -39,9 +41,9 @@ func TestProcessFunc1(t *testing.T) {
 	processor.Use(messageReplacer)
 
 	bottle := defaultBottle()
-	processedBottle, _ := processor.Run(bottle)
+	_ = processor.Run(bottle)
 
-	assert.Equal(t, *processedBottle.Message.Text, replaceMessage)
+	assert.Equal(t, *bottle.Message.Text, replaceMessage)
 }
 
 func TestProcessFuncError(t *testing.T) {
@@ -59,14 +61,14 @@ func TestProcessFuncError(t *testing.T) {
 	processor.Use(processFunc2)
 
 	bottle := defaultBottle()
-	processedBottle, err := processor.Run(bottle)
+	err := processor.Run(bottle)
 
 	if err != nil {
 		assert.NotEqual(t,
-			*processedBottle.Message.Text,
+			*bottle.Message.Text,
 			"Func2")
 		assert.Equal(t,
-			*processedBottle.Message.Text,
+			*bottle.Message.Text,
 			"This is a Test Message")
 	}
 }

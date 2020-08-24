@@ -11,7 +11,7 @@ type Bottle struct {
 	Message *Message
 }
 
-type ProcessFunc func(*Bottle) (*Bottle, error)
+type ProcessFunc func(*Bottle) (error)
 
 type Processor struct {
 	processFuncs []ProcessFunc
@@ -21,15 +21,15 @@ func New() *Processor {
 	return &Processor{}
 }
 
-func (p *Processor) Run(b *Bottle) (*Bottle, error) {
+func (p *Processor) Run(b *Bottle) (error) {
 	var err error
 	for _, f := range p.processFuncs {
-		b, err = f(b)
+		err = f(b)
 		if err != nil {
-			return b, err
+			return err
 		}
 	}
-	return b, nil
+	return nil
 }
 
 func (p *Processor) Use(f ProcessFunc) {
