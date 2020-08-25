@@ -3,14 +3,6 @@ package engine
 import ()
 
 
-type Message struct {
-	Text *string
-}
-
-type Bottle struct {
-	Message *Message
-}
-
 type StageFunc func(*Bottle) (error)
 
 type Pipeline struct {
