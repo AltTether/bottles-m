@@ -38,7 +38,7 @@ func TestStageFunc1(t *testing.T) {
 		b.Message.Text = &replaceMessage
 		return nil
 	}
-	pipeline.Use(messageReplacer)
+	pipeline.AddStage(messageReplacer)
 
 	bottle := defaultBottle()
 	_ = pipeline.Run(bottle)
@@ -57,8 +57,8 @@ func TestStageFuncError(t *testing.T) {
 		b.Message.Text = &text
 		return nil
 	}
-	pipeline.Use(stageFunc1)
-	pipeline.Use(stageFunc2)
+	pipeline.AddStage(stageFunc1)
+	pipeline.AddStage(stageFunc2)
 
 	bottle := defaultBottle()
 	err := pipeline.Run(bottle)

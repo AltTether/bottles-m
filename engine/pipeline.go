@@ -32,6 +32,6 @@ func (p *Pipeline) Run(b *Bottle) (error) {
 	return nil
 }
 
-func (p *Pipeline) Use(f StageFunc) {
+func (p *Pipeline) AddStage(f StageFunc) {
 	p.stages = append(p.stages, f)
 }
