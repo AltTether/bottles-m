@@ -17,7 +17,7 @@ type Pipeline struct {
 	stages []StageFunc
 }
 
-func New() *Pipeline {
+func NewPipeline() *Pipeline {
 	return &Pipeline{}
 }
 

@@ -20,7 +20,7 @@ func defaultBottle() *Bottle {
 }
 
 func TestPipeline(t *testing.T) {
-	pipeline := New()
+	pipeline := NewPipeline()
 
 	bottle := defaultBottle()
 	_ = pipeline.Run(bottle)
@@ -31,7 +31,7 @@ func TestPipeline(t *testing.T) {
 }
 
 func TestStageFunc1(t *testing.T) {
-	pipeline := New()
+	pipeline := NewPipeline()
 
 	replaceMessage := "replaced"
 	messageReplacer := func(b *Bottle) (error) {
@@ -47,7 +47,7 @@ func TestStageFunc1(t *testing.T) {
 }
 
 func TestStageFuncError(t *testing.T) {
-	pipeline := New()
+	pipeline := NewPipeline()
 
 	stageFunc1 := func(b *Bottle) (error) {
 		return fmt.Errorf("Func1 Error")
