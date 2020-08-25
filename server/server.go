@@ -18,8 +18,8 @@ func New() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
-	getProcessor := engine.New()
-	postProcessor := engine.New()
+	getPipeline := engine.NewPipeline()
+	postPipeline := engine.NewPipeline()
 
 	messagePool := pool.NewMessagePool()
 
@@ -27,7 +27,7 @@ func New() *gin.Engine {
 		messagePool.Add(b.Message)
 		return nil
 	}
-	postProcessor.Use(messageAdder)
+	postPipeline.AddStage(messageAdder)
 	
 	messageGetter := func(b *engine.Bottle) (error) {
 		message, err := messagePool.Get()
@@ -38,13 +38,13 @@ func New() *gin.Engine {
 
 		return nil
 	}
-	getProcessor.Use(messageGetter)
+	getPipeline.AddStage(messageGetter)
 
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/bottle", func(c *gin.Context) {
 			bottle := &engine.Bottle{}
-			err := getProcessor.Run(bottle)
+			err := getPipeline.Run(bottle)
 			if err != nil {
 				c.Status(http.StatusBadRequest)
 				return
@@ -69,7 +69,7 @@ func New() *gin.Engine {
 				},
 			}
 
-			err := postProcessor.Run(bottle)
+			err := postPipeline.Run(bottle)
 			if err != nil {
 				c.Status(http.StatusBadRequest)
 			}
