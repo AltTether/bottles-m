@@ -56,5 +56,5 @@ func TestGetBottleRoute(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, "{\"message\":{\"text\":\"test\"}}", w.Body.String())
+	assert.Contains(t, w.Body.String(), "\"message\":{\"text\":\"test\"}")
 }
