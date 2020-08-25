@@ -19,49 +19,49 @@ func defaultBottle() *Bottle {
 	return bottle;
 }
 
-func TestProcessor(t *testing.T) {
-	processor := New()
+func TestPipeline(t *testing.T) {
+	pipeline := New()
 
 	bottle := defaultBottle()
-	_ = processor.Run(bottle)
+	_ = pipeline.Run(bottle)
 
 	assert.Equal(t,
 		"This is a Test Message",
 		*bottle.Message.Text)
 }
 
-func TestProcessFunc1(t *testing.T) {
-	processor := New()
+func TestStageFunc1(t *testing.T) {
+	pipeline := New()
 
 	replaceMessage := "replaced"
-	messageReplacer := func(b *Bottle) (*Bottle, error) {
+	messageReplacer := func(b *Bottle) (error) {
 		b.Message.Text = &replaceMessage
-		return b, nil
+		return nil
 	}
-	processor.Use(messageReplacer)
+	pipeline.Use(messageReplacer)
 
 	bottle := defaultBottle()
-	_ = processor.Run(bottle)
+	_ = pipeline.Run(bottle)
 
 	assert.Equal(t, *bottle.Message.Text, replaceMessage)
 }
 
-func TestProcessFuncError(t *testing.T) {
-	processor := New()
+func TestStageFuncError(t *testing.T) {
+	pipeline := New()
 
-	processFunc1 := func(b *Bottle) (*Bottle, error) {
-		return b, fmt.Errorf("Func1 Error")
+	stageFunc1 := func(b *Bottle) (error) {
+		return fmt.Errorf("Func1 Error")
 	}
-	processFunc2 := func(b *Bottle) (*Bottle, error) {
+	stageFunc2 := func(b *Bottle) (error) {
 		text := "Func2"
 		b.Message.Text = &text
-		return b, nil
+		return nil
 	}
-	processor.Use(processFunc1)
-	processor.Use(processFunc2)
+	pipeline.Use(stageFunc1)
+	pipeline.Use(stageFunc2)
 
 	bottle := defaultBottle()
-	err := processor.Run(bottle)
+	err := pipeline.Run(bottle)
 
 	if err != nil {
 		assert.NotEqual(t,
