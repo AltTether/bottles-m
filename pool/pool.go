@@ -43,7 +43,7 @@ func (p *MessagePool) Add(m *engine.Message) error {
 }
 
 func (p *TokenPool) Use(t *engine.Token) (error) {
-	if _, ok := p.tokens[*t.Str]; ok {
+	if _, ok := p.tokens[*t.Str]; !ok {
 		return fmt.Errorf("Token is Invalid")
 	}
 
