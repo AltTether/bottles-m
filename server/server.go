@@ -1,12 +1,18 @@
 package server
 
 import (
+	"time"
 	"net/http"
+	"math/rand"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/bottles/pool"
 	"github.com/bottles/engine"
+)
+
+const (
+	LETTERS string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 
@@ -79,4 +85,17 @@ func New() *gin.Engine {
 	}
 
 	return r
+}
+
+func GenerateToken() string {
+	seed := 42
+	size := 10
+	r := rand.New(rand.NewSource(int64(seed)))
+	l := []rune(LETTERS)
+	b := make([]rune, size)
+	for i := range b {
+		b[i] = l[r.Intn(len(l))]
+	}
+	t := string(b)
+	return t
 }

@@ -58,3 +58,8 @@ func TestGetBottleRoute(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	assert.Contains(t, w.Body.String(), "\"message\":{\"text\":\"test\"}")
 }
+
+func TestGenerateToken(t *testing.T) {
+	tokenStr := GenerateToken()
+	assert.Equal(t, 10, len(tokenStr))
+}
