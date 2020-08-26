@@ -2,6 +2,7 @@ package pool
 
 import (
 	"fmt"
+	"time"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,4 +30,64 @@ func TestGetMessageFromEmptyPool(t *testing.T) {
 	message, err := pool.Get()
 	assert.Equal(t, err, fmt.Errorf("No Messages"))
 	assert.Nil(t, message)
+}
+
+func TestTokenPool(t *testing.T) {
+	expiration := 2 * time.Minute
+	pool := NewTokenPool(expiration)
+
+	tokenStr := "TesT"
+	token := &engine.Token{
+		Str: &tokenStr,
+	}
+
+	_ = pool.Add(token)
+	err := pool.Use(token)
+	assert.Equal(t, err, fmt.Errorf("Token is Invalid"))
+}
+
+func TestTokenPoolInvalidToken(t *testing.T) {
+	expiration := 2 * time.Minute
+	pool := NewTokenPool(expiration)
+
+	tokenStr := "TesT"
+	token := &engine.Token{
+		Str: &tokenStr,
+	}
+
+	err := pool.Use(token)
+	assert.Nil(t, err)
+}
+
+func TestTokenPoolSameToken(t *testing.T) {
+	expiration := 2 * time.Minute
+	pool := NewTokenPool(expiration)
+
+	tokenStr1 := "TesT"
+	tokenStr2 := "TesT"
+	token1 := &engine.Token{
+		Str: &tokenStr1,
+	}
+	token2 := &engine.Token{
+		Str: &tokenStr2,
+	}
+
+	_ = pool.Add(token1)
+	err := pool.Add(token2)
+	assert.Equal(t, err, fmt.Errorf("Pool has Same Token"))
+}
+
+func TestTokenPoolTokenExpiration(t *testing.T) {
+	expiration := 100 * time.Millisecond
+	pool := NewTokenPool(expiration)
+
+	tokenStr := "TesT"
+	token := &engine.Token{
+		Str: &tokenStr,
+	}
+
+	_ = pool.Add(token)
+	err := pool.Use(token)
+
+	assert.Equal(t, err, fmt.Errorf("Token is Invalid"))
 }
