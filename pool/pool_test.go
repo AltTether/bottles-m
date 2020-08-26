@@ -43,7 +43,7 @@ func TestTokenPool(t *testing.T) {
 
 	_ = pool.Add(token)
 	err := pool.Use(token)
-	assert.Equal(t, err, fmt.Errorf("Token is Invalid"))
+	assert.Nil(t, err)
 }
 
 func TestTokenPoolInvalidToken(t *testing.T) {
@@ -56,7 +56,7 @@ func TestTokenPoolInvalidToken(t *testing.T) {
 	}
 
 	err := pool.Use(token)
-	assert.Nil(t, err)
+	assert.Equal(t, fmt.Errorf("Token is Invalid"), err)
 }
 
 func TestTokenPoolSameToken(t *testing.T) {
@@ -78,7 +78,7 @@ func TestTokenPoolSameToken(t *testing.T) {
 }
 
 func TestTokenPoolTokenExpiration(t *testing.T) {
-	expiration := 100 * time.Millisecond
+	expiration := 10 * time.Millisecond
 	pool := NewTokenPool(expiration)
 
 	tokenStr := "TesT"
@@ -87,7 +87,8 @@ func TestTokenPoolTokenExpiration(t *testing.T) {
 	}
 
 	_ = pool.Add(token)
+	time.Sleep(50 * time.Millisecond)
 	err := pool.Use(token)
 
-	assert.Equal(t, err, fmt.Errorf("Token is Invalid"))
+	assert.Equal(t, fmt.Errorf("Token is Invalid"), err)
 }
