@@ -108,9 +108,8 @@ func New() *gin.Engine {
 	return r
 }
 
-func GenerateToken() string {
+func GenerateRandomString(size int) string {
 	seed := 42
-	size := 10
 	r := rand.New(rand.NewSource(int64(seed)))
 	l := []rune(LETTERS)
 	b := make([]rune, size)

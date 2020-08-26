@@ -68,6 +68,7 @@ func TestGetBottleRoute(t *testing.T) {
 }
 
 func TestGenerateToken(t *testing.T) {
-	tokenStr := GenerateToken()
-	assert.Equal(t, 10, len(tokenStr))
+	size := 10
+	tokenStr := GenerateRandomString(size)
+	assert.Equal(t, size, len(tokenStr))
 }
