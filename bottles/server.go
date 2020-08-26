@@ -36,18 +36,8 @@ func New() *gin.Engine {
 		tokenPool.Add(testToken)
 	}
 
-	tokenValidator := func(b *Bottle) (error) {
-		if err := tokenPool.Use(b.Token); err != nil {
-			return err
-		}
-		return nil
-	}
-	messageAdder := func(b *Bottle) (error) {
-		messagePool.Add(b.Message)
-		return nil
-	}
-	postPipeline.AddStage(tokenValidator)
-	postPipeline.AddStage(messageAdder)
+	postPipeline.AddStage(ValidateTokenStage(tokenPool))
+	postPipeline.AddStage(StoreMessageStage(messagePool))
 	
 	messageGetter := func(b *Bottle) (error) {
 		message, err := messagePool.Get()

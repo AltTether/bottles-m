@@ -23,6 +23,17 @@ func TestMessagePool(t *testing.T) {
 	assert.Equal(t, *messageFromPool.Text, text)
 }
 
+func TestMessagePoolPostNilMessageText(t *testing.T) {
+	pool := NewMessagePool()
+
+	message := &Message{
+		Text: nil,
+	}
+
+	err := pool.Add(message)
+	assert.Equal(t, fmt.Errorf("Message Text is Nil"), err)
+}
+
 func TestGetMessageFromEmptyPool(t *testing.T) {
 	pool := NewMessagePool()
 

@@ -36,6 +36,9 @@ func (p *MessagePool) Get() (*Message, error) {
 }
 
 func (p *MessagePool) Add(m *Message) error {
+	if m.Text == nil {
+		return fmt.Errorf("Message Text is Nil")
+	}
 	p.messages = append(p.messages, m)
 	return nil
 }
