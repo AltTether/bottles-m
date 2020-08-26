@@ -1,8 +1,6 @@
 package bottles
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,26 +14,7 @@ func New() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
-	getPipeline := NewPipeline()
-	postPipeline := NewPipeline()
-
-	messagePool := NewMessagePool()
-
-	tokenPool := NewTokenPool(2 * time.Minute)
-	if gin.Mode() == gin.TestMode {
-		testTokenStr := "test"
-		testToken := &Token{
-			Str: &testTokenStr,
-		}
-		tokenPool.Add(testToken)
-	}
-
-	postPipeline.AddStage(ValidateTokenStage(tokenPool))
-	postPipeline.AddStage(StoreMessageStage(messagePool))
-	
-	getPipeline.AddStage(AddTokenStage(tokenPool))
-	getPipeline.AddStage(AddMessageStage(messagePool))
-
+	getPipeline, postPipeline := DefaultPipelines()
 
 	v1 := r.Group("/api/v1")
 	{
