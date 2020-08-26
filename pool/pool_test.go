@@ -10,6 +10,7 @@ import (
 	"github.com/bottles/engine"
 )
 
+
 func TestMessagePool(t *testing.T) {
 	pool := NewMessagePool()
 
@@ -91,4 +92,17 @@ func TestTokenPoolTokenExpiration(t *testing.T) {
 	err := pool.Use(token)
 
 	assert.Equal(t, fmt.Errorf("Token is Invalid"), err)
+}
+
+func TestTokenPoolAddNilToken(t *testing.T) {
+	expiration := 10 * time.Second
+	pool := NewTokenPool(expiration)
+
+	token := &engine.Token{
+		Str: nil,
+	}
+
+	err := pool.Add(token)
+
+	assert.Equal(t, fmt.Errorf("Token is Nil"), err)
 }

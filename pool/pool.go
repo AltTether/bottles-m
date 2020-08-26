@@ -52,6 +52,9 @@ func (p *TokenPool) Use(t *engine.Token) (error) {
 }
 
 func (p *TokenPool) Add(t *engine.Token) (error) {
+	if t.Str == nil {
+		return fmt.Errorf("Token is Nil")
+	}
 	if _, ok := p.tokens[*t.Str]; ok {
 		return fmt.Errorf("Pool has Same Token")
 	}
