@@ -7,15 +7,23 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	testMessage = "test"
+	testToken = "test"
 	testRequestBody = &RequestBody{
 		Message: &testMessage,
+		Token:   &testToken,
 	}
 )
+
+
+func init() {
+	gin.SetMode(gin.TestMode)
+}
 
 func TestGetBottleRouteEmpty(t *testing.T) {
 	r := New()

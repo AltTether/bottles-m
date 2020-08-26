@@ -17,7 +17,8 @@ const (
 
 
 type RequestBody struct {
-	Message *string `json:"message"`
+	Message *string `json:"message" binding:"required"`
+	Token   *string `json:"token" binding:"required"`
 }
 
 func New() *gin.Engine {
@@ -29,10 +30,26 @@ func New() *gin.Engine {
 
 	messagePool := pool.NewMessagePool()
 
+	tokenPool := pool.NewTokenPool(2 * time.Minute)
+	if gin.Mode() == gin.TestMode {
+		testTokenStr := "test"
+		testToken := &engine.Token{
+			Str: &testTokenStr,
+		}
+		tokenPool.Add(testToken)
+	}
+
+	tokenValidator := func(b *engine.Bottle) (error) {
+		if err := tokenPool.Use(b.Token); err != nil {
+			return err
+		}
+		return nil
+	}
 	messageAdder := func(b *engine.Bottle) (error) {
 		messagePool.Add(b.Message)
 		return nil
 	}
+	postPipeline.AddStage(tokenValidator)
 	postPipeline.AddStage(messageAdder)
 	
 	messageGetter := func(b *engine.Bottle) (error) {
@@ -73,11 +90,14 @@ func New() *gin.Engine {
 				Message: &engine.Message{
 					Text: body.Message,
 				},
+				Token:   &engine.Token{
+					Str: body.Token,
+				},
 			}
 
 			err := postPipeline.Run(bottle)
 			if err != nil {
-				c.Status(http.StatusBadRequest)
+				c.Status(http.StatusInternalServerError)
 				return
 			}
 
