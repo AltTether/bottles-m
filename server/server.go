@@ -61,7 +61,24 @@ func New() *gin.Engine {
 
 		return nil
 	}
+	tokenAdder := func(b *engine.Bottle) (error) {
+		size := 10
+		tokenStr := GenerateRandomString(size)
+		token := &engine.Token{
+			Str: &tokenStr,
+		}
+		for tokenPool.Add(token) != nil {
+			tokenStr = GenerateRandomString(size)
+			token = &engine.Token{
+				Str: &tokenStr,
+			}
+		}
+		b.Token = token
+		return nil
+	}
+	getPipeline.AddStage(tokenAdder)
 	getPipeline.AddStage(messageGetter)
+
 
 	v1 := r.Group("/api/v1")
 	{
@@ -75,6 +92,9 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{
 				"message": gin.H{
 					"text": bottle.Message.Text,
+				},
+				"token": gin.H{
+					"str": bottle.Token.Str,
 				},
 			})
 		})
