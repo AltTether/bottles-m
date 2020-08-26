@@ -34,32 +34,8 @@ func New() *gin.Engine {
 	postPipeline.AddStage(ValidateTokenStage(tokenPool))
 	postPipeline.AddStage(StoreMessageStage(messagePool))
 	
-	messageGetter := func(b *Bottle) (error) {
-		message, err := messagePool.Get()
-		if err != nil {
-			return err
-		}
-		b.Message = message
-
-		return nil
-	}
-	tokenAdder := func(b *Bottle) (error) {
-		size := 10
-		tokenStr := GenerateRandomString(size)
-		token := &Token{
-			Str: &tokenStr,
-		}
-		for tokenPool.Add(token) != nil {
-			tokenStr = GenerateRandomString(size)
-			token = &Token{
-				Str: &tokenStr,
-			}
-		}
-		b.Token = token
-		return nil
-	}
-	getPipeline.AddStage(tokenAdder)
-	getPipeline.AddStage(messageGetter)
+	getPipeline.AddStage(AddTokenStage(tokenPool))
+	getPipeline.AddStage(AddMessageStage(messagePool))
 
 
 	v1 := r.Group("/api/v1")

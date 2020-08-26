@@ -72,3 +72,31 @@ func TestStoreMessageStageNilMessageText(t *testing.T) {
 	err := stage(bottle)
 	assert.Equal(t, fmt.Errorf("Message Text is Nil"), err)
 }
+
+func TestAddMessageStage(t *testing.T) {
+	pool := NewMessagePool()
+	stage := AddMessageStage(pool)
+
+	text := "test"
+	message := &Message{
+		Text: &text,
+	}
+	_ = pool.Add(message)
+	
+	composedBottle := &Bottle{}
+	err := stage(composedBottle)
+
+	assert.Nil(t, err)
+	assert.Equal(t, text, *composedBottle.Message.Text)
+}
+
+func TestAddTokenStage(t *testing.T) {
+	pool := NewTokenPool(10 * time.Second)
+	stage := AddTokenStage(pool)
+
+	composedBottle := &Bottle{}
+	err := stage(composedBottle)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 10, len(*composedBottle.Token.Str))
+}
