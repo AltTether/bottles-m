@@ -1,9 +1,5 @@
-package engine
+package bottles
 
-import ()
-
-
-type StageFunc func(*Bottle) (error)
 
 type Pipeline struct {
 	stages []StageFunc

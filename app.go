@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/bottles/server"
+	"github.com/bottles/bottles"
 )
 
 
 func main() {
-	s := server.New()
+	s := bottles.New()
 	s.Run()
 }

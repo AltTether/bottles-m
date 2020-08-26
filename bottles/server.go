@@ -1,4 +1,4 @@
-package server
+package bottles
 
 import (
 	"time"
@@ -6,9 +6,6 @@ import (
 	"math/rand"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/bottles/pool"
-	"github.com/bottles/engine"
 )
 
 const (
@@ -25,34 +22,34 @@ func New() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
-	getPipeline := engine.NewPipeline()
-	postPipeline := engine.NewPipeline()
+	getPipeline := NewPipeline()
+	postPipeline := NewPipeline()
 
-	messagePool := pool.NewMessagePool()
+	messagePool := NewMessagePool()
 
-	tokenPool := pool.NewTokenPool(2 * time.Minute)
+	tokenPool := NewTokenPool(2 * time.Minute)
 	if gin.Mode() == gin.TestMode {
 		testTokenStr := "test"
-		testToken := &engine.Token{
+		testToken := &Token{
 			Str: &testTokenStr,
 		}
 		tokenPool.Add(testToken)
 	}
 
-	tokenValidator := func(b *engine.Bottle) (error) {
+	tokenValidator := func(b *Bottle) (error) {
 		if err := tokenPool.Use(b.Token); err != nil {
 			return err
 		}
 		return nil
 	}
-	messageAdder := func(b *engine.Bottle) (error) {
+	messageAdder := func(b *Bottle) (error) {
 		messagePool.Add(b.Message)
 		return nil
 	}
 	postPipeline.AddStage(tokenValidator)
 	postPipeline.AddStage(messageAdder)
 	
-	messageGetter := func(b *engine.Bottle) (error) {
+	messageGetter := func(b *Bottle) (error) {
 		message, err := messagePool.Get()
 		if err != nil {
 			return err
@@ -61,15 +58,15 @@ func New() *gin.Engine {
 
 		return nil
 	}
-	tokenAdder := func(b *engine.Bottle) (error) {
+	tokenAdder := func(b *Bottle) (error) {
 		size := 10
 		tokenStr := GenerateRandomString(size)
-		token := &engine.Token{
+		token := &Token{
 			Str: &tokenStr,
 		}
 		for tokenPool.Add(token) != nil {
 			tokenStr = GenerateRandomString(size)
-			token = &engine.Token{
+			token = &Token{
 				Str: &tokenStr,
 			}
 		}
@@ -83,7 +80,7 @@ func New() *gin.Engine {
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/bottle", func(c *gin.Context) {
-			bottle := &engine.Bottle{}
+			bottle := &Bottle{}
 			err := getPipeline.Run(bottle)
 			if err != nil {
 				c.Status(http.StatusBadRequest)
@@ -106,11 +103,11 @@ func New() *gin.Engine {
 				return
 			}
 
-			bottle := &engine.Bottle{
-				Message: &engine.Message{
+			bottle := &Bottle{
+				Message: &Message{
 					Text: body.Message,
 				},
-				Token:   &engine.Token{
+				Token:   &Token{
 					Str: body.Token,
 				},
 			}

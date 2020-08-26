@@ -1,14 +1,12 @@
-package pool
+package bottles
 
 import (
 	"fmt"
 	"time"
-	
-	"github.com/bottles/engine"
 )
 
 type MessagePool struct {
-	messages []*engine.Message
+	messages []*Message
 }
 
 type TokenPool struct {
@@ -27,7 +25,7 @@ func NewTokenPool(expiration time.Duration) *TokenPool {
 	}
 }
 
-func (p *MessagePool) Get() (*engine.Message, error) {
+func (p *MessagePool) Get() (*Message, error) {
 	if len(p.messages) == 0 {
 		return nil, fmt.Errorf("No Messages")
 	}
@@ -37,12 +35,12 @@ func (p *MessagePool) Get() (*engine.Message, error) {
 	return m, nil
 }
 
-func (p *MessagePool) Add(m *engine.Message) error {
+func (p *MessagePool) Add(m *Message) error {
 	p.messages = append(p.messages, m)
 	return nil
 }
 
-func (p *TokenPool) Use(t *engine.Token) (error) {
+func (p *TokenPool) Use(t *Token) (error) {
 	if _, ok := p.tokens[*t.Str]; !ok {
 		return fmt.Errorf("Token is Invalid")
 	}
@@ -51,7 +49,7 @@ func (p *TokenPool) Use(t *engine.Token) (error) {
 	return nil
 }
 
-func (p *TokenPool) Add(t *engine.Token) (error) {
+func (p *TokenPool) Add(t *Token) (error) {
 	if t.Str == nil {
 		return fmt.Errorf("Token is Nil")
 	}

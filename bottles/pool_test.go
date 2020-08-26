@@ -1,4 +1,4 @@
-package pool
+package bottles
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	
-	"github.com/bottles/engine"
 )
 
 
@@ -15,7 +13,7 @@ func TestMessagePool(t *testing.T) {
 	pool := NewMessagePool()
 
 	text := "This is a Test Message"
-	message := &engine.Message{
+	message := &Message{
 		Text: &text,
 	}
 	
@@ -38,7 +36,7 @@ func TestTokenPool(t *testing.T) {
 	pool := NewTokenPool(expiration)
 
 	tokenStr := "TesT"
-	token := &engine.Token{
+	token := &Token{
 		Str: &tokenStr,
 	}
 
@@ -52,7 +50,7 @@ func TestTokenPoolInvalidToken(t *testing.T) {
 	pool := NewTokenPool(expiration)
 
 	tokenStr := "TesT"
-	token := &engine.Token{
+	token := &Token{
 		Str: &tokenStr,
 	}
 
@@ -66,10 +64,10 @@ func TestTokenPoolSameToken(t *testing.T) {
 
 	tokenStr1 := "TesT"
 	tokenStr2 := "TesT"
-	token1 := &engine.Token{
+	token1 := &Token{
 		Str: &tokenStr1,
 	}
-	token2 := &engine.Token{
+	token2 := &Token{
 		Str: &tokenStr2,
 	}
 
@@ -83,7 +81,7 @@ func TestTokenPoolTokenExpiration(t *testing.T) {
 	pool := NewTokenPool(expiration)
 
 	tokenStr := "TesT"
-	token := &engine.Token{
+	token := &Token{
 		Str: &tokenStr,
 	}
 
@@ -98,7 +96,7 @@ func TestTokenPoolAddNilToken(t *testing.T) {
 	expiration := 10 * time.Second
 	pool := NewTokenPool(expiration)
 
-	token := &engine.Token{
+	token := &Token{
 		Str: nil,
 	}
 
