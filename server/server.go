@@ -78,6 +78,7 @@ func New() *gin.Engine {
 			err := postPipeline.Run(bottle)
 			if err != nil {
 				c.Status(http.StatusBadRequest)
+				return
 			}
 
 			c.Status(http.StatusOK)
