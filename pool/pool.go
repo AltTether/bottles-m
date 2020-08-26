@@ -59,7 +59,7 @@ func (p *TokenPool) Add(t *engine.Token) (error) {
 	p.tokens[*t.Str] = true
 	go func() {
 		time.Sleep(p.expiration)
-		if _, ok := p.tokens[*t.Str]; ok {
+		if _, ok := p.tokens[*t.Str]; !ok {
 			return
 		}
 		delete(p.tokens, *t.Str)
