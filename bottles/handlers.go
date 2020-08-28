@@ -43,11 +43,7 @@ func PostBottleHandlerFunc(pipeline *Pipeline) gin.HandlerFunc {
 			},
 		}
 
-		err := pipeline.Run(bottle)
-		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
-		}
+		go pipeline.Run(bottle)
 
 		c.Status(http.StatusOK)
 	}

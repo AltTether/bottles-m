@@ -1,6 +1,7 @@
 package bottles
 
 import (
+	"time"
 	"bytes"
 	"testing"
 	"net/http"
@@ -60,6 +61,8 @@ func TestGetBottleRoute(t *testing.T) {
 		bytes.NewBuffer(body))
 	r.ServeHTTP(w, req)
 
+	// for pipeline, this behavior is expected(?)
+	time.Sleep(100 * time.Millisecond)
 	req, _ = http.NewRequest("GET", "/api/v1/bottle", nil)
 	r.ServeHTTP(w, req)
 
