@@ -75,6 +75,29 @@ func TestTokenPool(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestTokenPoolAddAndUseInGoRoutine(t *testing.T) {
+	expiration := 2 * time.Minute
+	pool := NewTokenPool(expiration)
+
+	n := 10
+	for i := 0; i < n; i++ {
+		tokenStr := GenerateRandomString(10)
+		go func() {
+			token := &Token{
+				Str: &tokenStr,
+			}
+			pool.Add(token)
+		}()
+
+		go func() {
+			token := &Token{
+				Str: &tokenStr,
+			}
+			pool.Use(token)
+		}()
+	}
+}
+
 func TestTokenPoolInvalidToken(t *testing.T) {
 	expiration := 2 * time.Minute
 	pool := NewTokenPool(expiration)

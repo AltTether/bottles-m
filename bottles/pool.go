@@ -13,7 +13,7 @@ type MessagePool struct {
 
 type TokenPool struct {
 	expiration time.Duration
-	tokens     map[string]bool
+	tokens     *sync.Map
 }
 
 func NewMessagePool() *MessagePool {
@@ -25,7 +25,7 @@ func NewMessagePool() *MessagePool {
 func NewTokenPool(expiration time.Duration) *TokenPool {
 	return &TokenPool{
 		expiration: expiration,
-		tokens:     make(map[string]bool),
+		tokens:     &sync.Map{},
 	}
 }
 
@@ -53,11 +53,10 @@ func (p *MessagePool) Add(m *Message) error {
 }
 
 func (p *TokenPool) Use(t *Token) (error) {
-	if _, ok := p.tokens[*t.Str]; !ok {
+	if _, ok := p.tokens.LoadAndDelete(*t.Str); !ok {
 		return fmt.Errorf("Token is Invalid")
 	}
-
-	delete(p.tokens, *t.Str)
+	
 	return nil
 }
 
@@ -65,17 +64,14 @@ func (p *TokenPool) Add(t *Token) (error) {
 	if t.Str == nil {
 		return fmt.Errorf("Token is Nil")
 	}
-	if _, ok := p.tokens[*t.Str]; ok {
+
+	if _, ok := p.tokens.LoadOrStore(*t.Str, true); ok {
 		return fmt.Errorf("Pool has Same Token")
 	}
 
-	p.tokens[*t.Str] = true
 	go func() {
 		time.Sleep(p.expiration)
-		if _, ok := p.tokens[*t.Str]; !ok {
-			return
-		}
-		delete(p.tokens, *t.Str)
+		p.Use(t)
 	}()
 
 	return nil
