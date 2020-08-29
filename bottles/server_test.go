@@ -27,7 +27,7 @@ func init() {
 }
 
 func TestGetBottleRouteEmpty(t *testing.T) {
-	r := New()
+	r := Default()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle", nil)
@@ -38,7 +38,7 @@ func TestGetBottleRouteEmpty(t *testing.T) {
 }
 
 func TestPostBottleRoute(t *testing.T) {
-	r := New()
+	r := Default()
 
 	w := httptest.NewRecorder()
 	body, _ := json.Marshal(testRequestBody)
@@ -52,7 +52,7 @@ func TestPostBottleRoute(t *testing.T) {
 }
 
 func TestGetBottleRoute(t *testing.T) {
-	r := New()
+	r := Default()
 
 	w := httptest.NewRecorder()
 	body, _ := json.Marshal(testRequestBody)

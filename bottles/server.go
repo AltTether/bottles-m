@@ -12,15 +12,21 @@ type RequestBody struct {
 	Token   *string `json:"token" binding:"required"`
 }
 
-func New() *gin.Engine {
+type Config struct {
+	GetPipeline  *Pipeline
+	PostPipeline *Pipeline
+}
+
+func New(conf Config) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
-	registerRoute(r)
+
+	registerRoute(r, conf.GetPipeline, conf.PostPipeline)
 
 	return r
 }
 
-func registerRoute(r *gin.Engine) {
+func Default() *gin.Engine {
 	getPipeline := NewPipeline()
 	postPipeline := NewPipeline()
 
@@ -40,6 +46,15 @@ func registerRoute(r *gin.Engine) {
 	getPipeline.AddStage(AddTokenStage(tokenPool))
 	getPipeline.AddStage(AddMessageStage(messagePool))
 
+	conf := Config{
+		GetPipeline:  getPipeline,
+		PostPipeline: postPipeline,
+	}
+
+	return New(conf)
+}
+
+func registerRoute(r *gin.Engine, getPipeline, postPipeline *Pipeline) {
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/bottle", GetBottleHandlerFunc(getPipeline))
