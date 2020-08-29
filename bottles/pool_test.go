@@ -42,6 +42,25 @@ func TestGetMessageFromEmptyPool(t *testing.T) {
 	assert.Nil(t, message)
 }
 
+func TestMessagePoolAddAndGetInGoRoutine(t *testing.T) {
+	pool := NewMessagePool()
+
+	n := 10
+	for i := 0; i < n; i++ {
+		text := "This is a Test Message"
+		go func() {
+			message := &Message{
+				Text: &text,
+			}
+			pool.Add(message)
+		}()
+
+		go func() {
+			_, _ = pool.Get()
+		}()
+	}
+}
+
 func TestTokenPool(t *testing.T) {
 	expiration := 2 * time.Minute
 	pool := NewTokenPool(expiration)
