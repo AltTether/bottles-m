@@ -32,21 +32,6 @@ func Default() *gin.Engine {
 
 	messagePool := NewMessagePool()
 	tokenPool := NewTokenPool(2 * time.Minute)
-	if gin.Mode() == gin.TestMode {
-		testTokenStr := "test"
-		testToken := &Token{
-			Str: &testTokenStr,
-		}
-		tokenPool.Add(testToken)
-	}
-
-	for i := 0; i < 10; i++ {
-		text := "test"
-		message := &Message{
-			Text: &text,
-		}
-		messagePool.Add(message)
-	}
 
 	postPipeline.AddStage(ValidateTokenStage(tokenPool))
 	postPipeline.AddStage(StoreMessageStage(messagePool))

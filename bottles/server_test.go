@@ -1,6 +1,7 @@
 package bottles
 
 import (
+	"fmt"
 	"time"
 	"bytes"
 	"testing"
@@ -14,11 +15,9 @@ import (
 )
 
 var (
-	testMessage = "test"
-	testToken = "test"
-	testRequestBody = &RequestBody{
-		Message: &testMessage,
-		Token:   &testToken,
+	testMessageText = "test"
+	testTokenStrFormatter = func(i int) string {
+		return fmt.Sprintf("test%d", i)
 	}
 )
 
@@ -39,23 +38,8 @@ func TestGetBottleRouteEmpty(t *testing.T) {
 }
 
 func TestGetBottleStreamRoute(t *testing.T) {
-	messagePool := NewMessagePool()
-	tokenPool := NewTokenPool(2 * time.Minute)
-	for i := 0; i < 10; i++ {
-		text := "test"
-		_ = messagePool.Add(&Message{
-			Text: &text,
-		})
-	}
-
-	for i := 0; i < 10; i++ {
-		str := GenerateRandomString(10)
-		_ = tokenPool.Add(&Token{
-			Str: &str,
-		})
-	}
-
-	r := DefaultWithPools(messagePool, tokenPool)
+	n := 10
+	r := CreateTestEngine(n)
 
 	w := CreateTestResponseRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle/stream", nil)
@@ -71,10 +55,19 @@ func TestGetBottleStreamRoute(t *testing.T) {
 }
 
 func TestPostBottleRoute(t *testing.T) {
-	r := Default()
+	n := 10
+	r := CreateTestEngine(n)
 
 	w := httptest.NewRecorder()
+
+	message := testMessageText
+	token := testTokenStrFormatter(n - 1)
+	testRequestBody := &RequestBody{
+		Message: &message,
+		Token:   &token,
+	}
 	body, _ := json.Marshal(testRequestBody)
+	
 	req, _ := http.NewRequest("POST",
 		"/api/v1/bottle",
 		bytes.NewBuffer(body))
@@ -85,18 +78,11 @@ func TestPostBottleRoute(t *testing.T) {
 }
 
 func TestGetBottleRoute(t *testing.T) {
-	r := Default()
+	n := 10
+	r := CreateTestEngine(n)
 
 	w := httptest.NewRecorder()
-	body, _ := json.Marshal(testRequestBody)
-	req, _ := http.NewRequest("POST",
-		"/api/v1/bottle",
-		bytes.NewBuffer(body))
-	r.ServeHTTP(w, req)
-
-	// for pipeline, this behavior is expected(?)
-	time.Sleep(100 * time.Millisecond)
-	req, _ = http.NewRequest("GET", "/api/v1/bottle", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/bottle", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -109,10 +95,16 @@ func TestGenerateToken(t *testing.T) {
 	assert.Equal(t, size, len(tokenStr))
 }
 
-func CreateTestTokenPool() *TokenPool {
+func CreateTestEngine(n int) *gin.Engine {
+	messagePool := CreateTestMessagePool(n)
+	tokenPool := CreateTestTokenPool(n)
+	return DefaultWithPools(messagePool, tokenPool)
+}
+
+func CreateTestTokenPool(n int) *TokenPool {
 	tokenPool := NewTokenPool(2 * time.Minute)
-	for i := 0; i < 10; i++ {
-		str := fmt.Sprintf("test%d", i)
+	for i := 0; i < n; i++ {
+		str := testTokenStrFormatter(i)
 		_ = tokenPool.Add(&Token{
 			Str: &str,
 		})
@@ -120,10 +112,10 @@ func CreateTestTokenPool() *TokenPool {
 	return tokenPool
 }
 
-func CreateTestMessagePool() *MessagePool {
+func CreateTestMessagePool(n int) *MessagePool {
 	messagePool := NewMessagePool()
-	for i := 0; i < 10; i++ {
-		text := "test"
+	for i := 0; i < n; i++ {
+		text := testMessageText
 		_ = messagePool.Add(&Message{
 			Text: &text,
 		})
