@@ -85,5 +85,6 @@ func registerRoute(r *gin.Engine, getPipeline, postPipeline *Pipeline) {
 	{
 		v1.GET("/bottle", GetBottleHandlerFunc(getPipeline))
 		v1.POST("/bottle", PostBottleHandlerFunc(postPipeline))
+		v1.GET("/bottle/stream", GetBottleStreamHandlerFunc(getPipeline))
 	}
 }

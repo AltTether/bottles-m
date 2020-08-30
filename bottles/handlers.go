@@ -1,6 +1,8 @@
 package bottles;
 
 import (
+	"io"
+	"time"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +24,39 @@ func GetBottleHandlerFunc(pipeline *Pipeline) gin.HandlerFunc {
 			"token": gin.H{
 				"str": bottle.Token.Str,
 			},
+		})
+	}
+}
+
+func GetBottleStreamHandlerFunc(pipeline *Pipeline) gin.HandlerFunc {
+	sendDelay := time.Duration(10 * time.Millisecond)
+	return func(c *gin.Context) {
+		ticker := time.NewTicker(sendDelay)
+		defer ticker.Stop()
+
+		clientGone := c.Writer.CloseNotify()
+		c.Stream(func(w io.Writer) bool {
+			select {
+			case <-clientGone:
+				return false
+			case <-ticker.C:
+				bottle := &Bottle{}
+				if pipeline.Run(bottle) != nil {
+					return true
+				}
+
+				c.SSEvent("bottle", gin.H{
+					"message": gin.H{
+						"text": bottle.Message.Text,
+					},
+					"token": gin.H{
+						"str": bottle.Token.Str,
+					},
+				})
+				return true
+			default:
+				return true
+			}
 		})
 	}
 }
