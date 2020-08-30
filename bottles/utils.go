@@ -8,10 +8,13 @@ const (
 	LETTERS string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+var (
+	seed = 42
+	r = rand.New(rand.NewSource(int64(seed)))
+)
+
 
 func GenerateRandomString(size int) string {
-	seed := 42
-	r := rand.New(rand.NewSource(int64(seed)))
 	l := []rune(LETTERS)
 	b := make([]rune, size)
 	for i := range b {
