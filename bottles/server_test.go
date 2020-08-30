@@ -4,6 +4,7 @@ import (
 	"time"
 	"bytes"
 	"testing"
+	"strings"
 	"net/http"
 	"encoding/json"
 	"net/http/httptest"
@@ -35,6 +36,39 @@ func TestGetBottleRouteEmpty(t *testing.T) {
 
 	assert.Equal(t, 400, w.Code)
 	assert.Equal(t, "", w.Body.String())
+}
+
+func TestGetBottleStreamRoute(t *testing.T) {
+	messagePool := NewMessagePool()
+	tokenPool := NewTokenPool(2 * time.Minute)
+	for i := 0; i < 10; i++ {
+		text := "test"
+		_ = messagePool.Add(&Message{
+			Text: &text,
+		})
+	}
+
+	for i := 0; i < 10; i++ {
+		str := GenerateRandomString(10)
+		_ = tokenPool.Add(&Token{
+			Str: &str,
+		})
+	}
+
+	r := DefaultWithPools(messagePool, tokenPool)
+
+	//w := httptest.NewRecorder()
+	w := CreateTestResponseRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/bottle/stream", nil)
+	go func () {
+		time.Sleep(100 * time.Millisecond)
+		w.closeClient()
+	}()
+	r.ServeHTTP(w, req)
+	
+	assert.Equal(t, 200, w.Code)
+	assert.Greater(t,
+		strings.Count(w.Body.String(), "{\"text\":\"test\"}"), 1)
 }
 
 func TestPostBottleRoute(t *testing.T) {
@@ -74,4 +108,24 @@ func TestGenerateToken(t *testing.T) {
 	size := 10
 	tokenStr := GenerateRandomString(size)
 	assert.Equal(t, size, len(tokenStr))
+}
+
+type TestResponseRecorder struct {
+	*httptest.ResponseRecorder
+	closeChannel chan bool
+}
+
+func (r *TestResponseRecorder) CloseNotify() <-chan bool {
+	return r.closeChannel
+}
+
+func (r *TestResponseRecorder) closeClient() {
+	r.closeChannel <- true
+}
+
+func CreateTestResponseRecorder() *TestResponseRecorder {
+	return &TestResponseRecorder{
+		httptest.NewRecorder(),
+		make(chan bool, 1),
+	}
 }
