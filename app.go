@@ -6,6 +6,6 @@ import (
 
 
 func main() {
-	s := bottles.New()
+	s := bottles.Default()
 	s.Run()
 }
