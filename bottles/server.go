@@ -40,6 +40,32 @@ func Default() *gin.Engine {
 		tokenPool.Add(testToken)
 	}
 
+	for i := 0; i < 10; i++ {
+		text := "test"
+		message := &Message{
+			Text: &text,
+		}
+		messagePool.Add(message)
+	}
+
+	postPipeline.AddStage(ValidateTokenStage(tokenPool))
+	postPipeline.AddStage(StoreMessageStage(messagePool))
+
+	getPipeline.AddStage(AddTokenStage(tokenPool))
+	getPipeline.AddStage(AddMessageStage(messagePool))
+
+	conf := Config{
+		GetPipeline:  getPipeline,
+		PostPipeline: postPipeline,
+	}
+
+	return New(conf)
+}
+
+func DefaultWithPools(messagePool *MessagePool, tokenPool *TokenPool) *gin.Engine {
+	getPipeline := NewPipeline()
+	postPipeline := NewPipeline()
+
 	postPipeline.AddStage(ValidateTokenStage(tokenPool))
 	postPipeline.AddStage(StoreMessageStage(messagePool))
 
