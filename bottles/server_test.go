@@ -40,7 +40,7 @@ func TestGetBottleRouteEmpty(t *testing.T) {
 func TestGetBottleStreamRoute(t *testing.T) {
 	n := 10
 	r := CreateTestEngine(n)
-
+	
 	w := CreateTestResponseRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle/stream", nil)
 	go func () {
