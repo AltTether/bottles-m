@@ -9,6 +9,11 @@ import (
 )
 
 
+type RequestBody struct {
+	Message *string `json:"message" binding:"required"`
+	Token   *string `json:"token" binding:"required"`
+}
+
 func GetBottleHandlerFunc(pipeline *Pipeline) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		bottle := &Bottle{}

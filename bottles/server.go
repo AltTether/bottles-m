@@ -7,11 +7,6 @@ import(
 )
 
 
-type RequestBody struct {
-	Message *string `json:"message" binding:"required"`
-	Token   *string `json:"token" binding:"required"`
-}
-
 type Config struct {
 	GetPipeline  *Pipeline
 	PostPipeline *Pipeline
