@@ -95,7 +95,7 @@ func TestGenerateToken(t *testing.T) {
 	assert.Equal(t, size, len(tokenStr))
 }
 
-func CreateTestEngine(n int) *gin.Engine {
+func CreateTestEngine(n int) *Engine {
 	messagePool := CreateTestMessagePool(n)
 	tokenPool := CreateTestTokenPool(n)
 	return DefaultWithPools(messagePool, tokenPool)

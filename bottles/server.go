@@ -7,13 +7,19 @@ import(
 )
 
 
+type Engine struct {
+	*gin.Engine
+}
+
 type Config struct {
-	GetPipeline  *Pipeline
+	GetPipeline *Pipeline
 	PostPipeline *Pipeline
 }
 
-func New(conf Config) *gin.Engine {
-	r := gin.New()
+func New(conf Config) *Engine {
+	r := &Engine{
+		gin.New(),
+	}
 	r.Use(gin.Logger(), gin.Recovery())
 
 	registerRoute(r, conf.GetPipeline, conf.PostPipeline)
@@ -21,7 +27,7 @@ func New(conf Config) *gin.Engine {
 	return r
 }
 
-func Default() *gin.Engine {
+func Default() *Engine {
 	getPipeline := NewPipeline()
 	postPipeline := NewPipeline()
 
@@ -42,7 +48,7 @@ func Default() *gin.Engine {
 	return New(conf)
 }
 
-func DefaultWithPools(messagePool *MessagePool, tokenPool *TokenPool) *gin.Engine {
+func DefaultWithPools(messagePool *MessagePool, tokenPool *TokenPool) *Engine {
 	getPipeline := NewPipeline()
 	postPipeline := NewPipeline()
 
@@ -60,7 +66,7 @@ func DefaultWithPools(messagePool *MessagePool, tokenPool *TokenPool) *gin.Engin
 	return New(conf)
 }
 
-func registerRoute(r *gin.Engine, getPipeline, postPipeline *Pipeline) {
+func registerRoute(r *Engine, getPipeline, postPipeline *Pipeline) {
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/bottle", GetBottleHandlerFunc(getPipeline))
