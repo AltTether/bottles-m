@@ -27,28 +27,36 @@ func init() {
 }
 
 func TestGetBottleRouteEmpty(t *testing.T) {
-	r := Default()
+	engine := New()
+	r := NewServer(engine.Gateway)
+
+	engine.Run()
+	defer engine.Stop()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle", nil)
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, 400, w.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Equal(t, "", w.Body.String())
 }
 
 func TestGetBottleStreamRoute(t *testing.T) {
 	n := 10
-	r := CreateTestEngine(n)
+	engine := CreateTestEngine(n)
+	r := NewServer(engine.Gateway)
+
+	engine.Run()
+	defer engine.Stop()
 	
 	w := CreateTestResponseRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle/stream", nil)
 	go func () {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 		w.closeClient()
 	}()
 	r.ServeHTTP(w, req)
-	
+
 	assert.Equal(t, 200, w.Code)
 	assert.Greater(t,
 		strings.Count(w.Body.String(), "{\"text\":\"test\"}"), 1)
@@ -56,7 +64,11 @@ func TestGetBottleStreamRoute(t *testing.T) {
 
 func TestPostBottleRoute(t *testing.T) {
 	n := 10
-	r := CreateTestEngine(n)
+	engine := CreateTestEngine(n)
+	r := NewServer(engine.Gateway)
+
+	engine.Run()
+	defer engine.Stop()
 
 	w := httptest.NewRecorder()
 
@@ -79,7 +91,11 @@ func TestPostBottleRoute(t *testing.T) {
 
 func TestGetBottleRoute(t *testing.T) {
 	n := 10
-	r := CreateTestEngine(n)
+	engine := CreateTestEngine(n)
+	r := NewServer(engine.Gateway)
+
+	engine.Run()
+	defer engine.Stop()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle", nil)
@@ -89,16 +105,16 @@ func TestGetBottleRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "\"message\":{\"text\":\"test\"}")
 }
 
-func TestGenerateToken(t *testing.T) {
-	size := 10
-	tokenStr := GenerateRandomString(size)
-	assert.Equal(t, size, len(tokenStr))
-}
-
 func CreateTestEngine(n int) *Engine {
 	messagePool := CreateTestMessagePool(n)
 	tokenPool := CreateTestTokenPool(n)
-	return DefaultWithPools(messagePool, tokenPool)
+
+	engine := New()
+
+	engine.SetBottleGetHandler(BottleGetHandler(tokenPool, messagePool))
+	engine.SetBottleAddHandler(BottleAddHandler(tokenPool, messagePool))
+
+	return engine
 }
 
 func CreateTestTokenPool(n int) *TokenPool {
