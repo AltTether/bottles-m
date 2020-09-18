@@ -79,9 +79,13 @@ func TestTokenPoolAddAndUseInGoRoutine(t *testing.T) {
 	expiration := 2 * time.Minute
 	pool := NewTokenPool(expiration)
 
+	seed := 42
+	size := 10
+	gen := NewRandomStringGenerator(size, seed)
+
 	n := 10
 	for i := 0; i < n; i++ {
-		tokenStr := GenerateRandomString(10)
+		tokenStr := gen.Generate()
 		go func() {
 			token := &Token{
 				Str: &tokenStr,

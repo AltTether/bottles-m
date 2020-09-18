@@ -118,6 +118,10 @@ func BottleAddHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFun
 }
 
 func BottleGetHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFunc {
+	size := 10
+	seed := 42
+	gen := NewRandomStringGenerator(size, seed)
+
 	return func(ctx context.Context, b *Bottle) {
 		message, err := messagePool.Get()
 		if err != nil {
@@ -125,13 +129,12 @@ func BottleGetHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFun
 		}
 		b.Message = message
 
-		size := 10
-		tokenStr := GenerateRandomString(size)
+		tokenStr := gen.Generate()
 		token := &Token{
 			Str: &tokenStr,
 		}
 		for tokenPool.Add(token) != nil {
-			tokenStr = GenerateRandomString(size)
+			tokenStr = gen.Generate()
 			token = &Token{
 				Str: &tokenStr,
 			}
