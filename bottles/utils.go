@@ -1,7 +1,9 @@
 package bottles
 
 import (
+	"time"
 	"sync"
+	"context"
 	"math/rand"
 )
 
@@ -34,4 +36,49 @@ func (g *RandomStringGenerator) Generate() string {
 	g.mux.Unlock()
 	t := string(b)
 	return t
+}
+
+type EmptyMessageAdder struct {
+	ctx          context.Context
+	cancelFunc   context.CancelFunc
+	messagePool  *MessagePool
+	intervalTime time.Duration
+}
+
+func NewEmptyMessageAdder(messagePool *MessagePool, intervalTime time.Duration) *EmptyMessageAdder {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &EmptyMessageAdder{
+		ctx:          ctx,
+		cancelFunc:   cancel,
+		messagePool:  messagePool,
+		intervalTime: intervalTime,
+	}
+}
+
+func (a *EmptyMessageAdder) Run() {
+	go func() {
+		t := time.NewTicker(a.intervalTime)
+		defer t.Stop()
+	Loop:
+		for {
+			select {
+			case <-a.ctx.Done():
+				break Loop
+			case <-t.C:
+				text := ""
+				m := &Message{
+					Text: &text,
+				}
+				if a.messagePool.Add(m) != nil {
+					break
+				}
+			default:
+				break
+			}
+		}
+	}()
+}
+
+func (a *EmptyMessageAdder) Stop() {
+	a.cancelFunc()
 }

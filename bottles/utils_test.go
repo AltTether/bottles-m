@@ -1,6 +1,7 @@
 package bottles
 
 import (
+	"time"
 	"sync"
 	"testing"
 	"math/rand"
@@ -57,6 +58,25 @@ func TestGenerateRandomStringsInGoroutine(t *testing.T) {
 		assert.NotContains(t, copyRandomStrings, randomStrings[i])
 		copyRandomStrings[i] = randomStrings[i]
 	}
+}
+
+func TestEmptyMessageAdder(t *testing.T) {
+	messagePool := CreateTestMessagePool(0)
+	intervalTime := 50 * time.Millisecond
+	gen := NewEmptyMessageAdder(messagePool, intervalTime)
+
+	gen.Run()
+	time.Sleep(100 * time.Millisecond)
+	gen.Stop()
+
+	cnt := 0
+	_, err := messagePool.Get()
+	for err == nil {
+		cnt++;
+		_, err = messagePool.Get()
+	}
+
+	assert.Less(t, 0, cnt)
 }
 
 const (
