@@ -34,6 +34,8 @@ func GetBottleHandlerFunc(gateway *Gateway) gin.HandlerFunc {
 						},
 					})
 					return
+				default:
+					break
 				}
 			}
 		}()
