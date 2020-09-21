@@ -32,6 +32,7 @@ func NewTokenPool(expiration time.Duration) *TokenPool {
 func (p *MessagePool) Get() (*Message, error) {
 	p.mux.Lock()
 	if len(p.messages) == 0 {
+		p.mux.Unlock()
 		return nil, fmt.Errorf("No Messages")
 	}
 
