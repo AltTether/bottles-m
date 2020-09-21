@@ -1,10 +1,11 @@
 package bottles
 
 import (
+	"time"
 	"testing"
 	"context"
 
-	//"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSetHandlersToEngine(t *testing.T) {
@@ -33,4 +34,37 @@ func TestAddFromGateway(t *testing.T) {
 	gateway.Add(&Bottle{})
 
 	engine.Stop()
+}
+
+func TestGenerateEmptyBottle(t *testing.T) {
+	engine := New()
+
+	messagePool := CreateTestMessagePool(0)
+	tokenPool := CreateTestTokenPool(0)
+
+	bottleGetHandlerFunc := BottleGetHandler(tokenPool, messagePool)
+	bottleGenerateHandlerFunc := BottleGenerateHandler(messagePool)
+
+	engine.SetBottleGetHandler(bottleGetHandlerFunc)
+	engine.SetBottleGenerateHandler(bottleGenerateHandlerFunc)
+
+	gateway := engine.Gateway
+	engine.Run()
+	defer engine.Stop()
+
+	cnt := 0
+	timeout := time.After(100 * time.Millisecond)
+Loop:
+	for {
+		select {
+		case <-gateway.Get():
+			cnt++
+		case <-timeout:
+			break Loop
+		default:
+			break
+		}
+	}
+
+	assert.Greater(t, cnt, 0)
 }

@@ -1,6 +1,7 @@
 package bottles
 
 import (
+	"time"
 	"context"
 )
 
@@ -19,11 +20,12 @@ type Bottle struct {
 }
 
 type Engine struct {
-	Ctx              context.Context
-	cancelFunc       context.CancelFunc
-	Gateway          *Gateway
-	BottleAddHandler HandlerFunc
-	BottleGetHandler HandlerFunc
+	Ctx                   context.Context
+	cancelFunc            context.CancelFunc
+	Gateway               *Gateway
+	BottleAddHandler      HandlerFunc
+	BottleGetHandler      HandlerFunc
+	BottleGenerateHandler HandlerFunc
 }
 
 type HandlerFunc func(ctx context.Context, bottle *Bottle)
@@ -46,6 +48,7 @@ func New() *Engine {
 		Gateway:          gateway,
 		BottleAddHandler: func(ctx context.Context, b *Bottle) {},
 		BottleGetHandler: func(ctx context.Context, b *Bottle) {},
+		BottleGenerateHandler: func(ctx context.Context, b *Bottle) {},
 	}
 }
 
@@ -55,6 +58,10 @@ func (e *Engine) SetBottleAddHandler(h HandlerFunc) {
 
 func (e *Engine) SetBottleGetHandler(h HandlerFunc) {
 	e.BottleGetHandler = h
+}
+
+func (e *Engine) SetBottleGenerateHandler(h HandlerFunc) {
+	e.BottleGenerateHandler = h
 }
 
 func (e *Engine) Run() {
@@ -90,6 +97,28 @@ func (e *Engine) Run() {
 			}
 		}
 		return
+	}()
+
+	go func() {
+		t := time.NewTicker(10 * time.Millisecond)
+		defer t.Stop()
+	Loop:
+		for {
+			select {
+			case <- e.Ctx.Done():
+				break Loop
+			case <-t.C:
+				text := ""
+				b := &Bottle{
+					Message: &Message{
+						Text: &text,
+					},
+				}
+				e.BottleGenerateHandler(e.Ctx, b)
+			default:
+				break
+			}
+		}
 	}()
 }
 
@@ -140,5 +169,11 @@ func BottleGetHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFun
 			}
 		}
 		b.Token = token
+	}
+}
+
+func BottleGenerateHandler(messagePool *MessagePool) HandlerFunc {
+	return func(ctx context.Context, b *Bottle) {
+		messagePool.Add(b.Message)
 	}
 }
