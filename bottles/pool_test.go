@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"testing"
+	"context"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -45,20 +46,53 @@ func TestGetMessageFromEmptyPool(t *testing.T) {
 func TestMessagePoolAddAndGetInGoRoutine(t *testing.T) {
 	pool := NewMessagePool()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	cnt := 0
 	n := 10
 	for i := 0; i < n; i++ {
-		text := "This is a Test Message"
 		go func() {
-			message := &Message{
-				Text: &text,
+			ticker := time.NewTicker(10 * time.Millisecond)
+			defer ticker.Stop()
+		Loop:
+			for {
+				select {
+				case <-ctx.Done():
+					break Loop
+				case <-ticker.C:
+					text := "This is a Test Message"
+					message := &Message{
+						Text: &text,
+					}
+					pool.Add(message)
+				default:
+					break
+				}
 			}
-			pool.Add(message)
 		}()
 
 		go func() {
-			_, _ = pool.Get()
+			ticker := time.NewTicker(1 * time.Millisecond)
+			defer ticker.Stop()
+		Loop:
+			for {
+				select {
+				case <-ctx.Done():
+					break Loop
+				case <-ticker.C:
+					if _, err := pool.Get(); err == nil {
+						cnt++
+					}
+				default:
+					break
+				}
+			}
 		}()
 	}
+
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	assert.Greater(t, cnt, 0)
 }
 
 func TestTokenPool(t *testing.T) {
@@ -79,9 +113,13 @@ func TestTokenPoolAddAndUseInGoRoutine(t *testing.T) {
 	expiration := 2 * time.Minute
 	pool := NewTokenPool(expiration)
 
+	seed := 42
+	size := 10
+	gen := NewRandomStringGenerator(size, seed)
+
 	n := 10
 	for i := 0; i < n; i++ {
-		tokenStr := GenerateRandomString(10)
+		tokenStr := gen.Generate()
 		go func() {
 			token := &Token{
 				Str: &tokenStr,
