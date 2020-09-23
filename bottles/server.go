@@ -22,3 +22,13 @@ func registerRoute(r *gin.Engine, gateway *Gateway) {
 		v1.GET("/bottle/stream", GetBottleStreamHandlerFunc(gateway))
 	}
 }
+
+func Run() {
+	e := DefaultEngine()
+	g := e.Gateway
+	e.Run()
+	defer e.Stop()
+
+	s := NewServer(g)
+	s.Run()
+}

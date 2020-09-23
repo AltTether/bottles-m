@@ -68,3 +68,37 @@ Loop:
 
 	assert.Greater(t, cnt, 0)
 }
+
+func TestDefaultEngine(t *testing.T) {
+	engine := DefaultEngine()
+	gateway := engine.Gateway
+
+	engine.Run()
+	defer engine.Stop()
+
+	n := 10
+	tokenStrs := make([]*string, n)
+	for i := 0; i < n; i++ {
+		bottle := <-gateway.Get()
+		tokenStrs[i] = bottle.Token.Str
+	}
+
+	for i := 0; i < n; i++ {
+		tokenStr := tokenStrs[i]
+		token := &Token{
+			Str: tokenStr,
+		}
+
+		messageText := ""
+		message := &Message{
+			Text: &messageText,
+		}
+
+		b := &Bottle{
+			Message: message,
+			Token:   token,
+		}
+
+		gateway.Add(b)
+	}
+}

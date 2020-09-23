@@ -52,6 +52,26 @@ func New() *Engine {
 	}
 }
 
+func DefaultEngine() *Engine{
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	gateway := &Gateway{
+		In:  make(chan *Bottle),
+		Out: make(chan *Bottle),
+	}
+
+	messagePool := NewMessagePool()
+	tokenPool := NewTokenPool(10 * time.Second)
+
+	return &Engine{
+		Ctx:                   ctx,
+		cancelFunc:            cancelFunc,
+		Gateway:               gateway,
+		BottleAddHandler:      BottleAddHandler(tokenPool, messagePool),
+		BottleGetHandler:      BottleGetHandler(tokenPool, messagePool),
+		BottleGenerateHandler: BottleGenerateHandler(messagePool),
+	}
+}
+
 func (e *Engine) SetBottleAddHandler(h HandlerFunc) {
 	e.BottleAddHandler = h
 }
