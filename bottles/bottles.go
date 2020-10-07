@@ -59,16 +59,16 @@ func DefaultEngine() *Engine{
 		Out: make(chan *Bottle),
 	}
 
-	messagePool := NewMessagePool()
-	tokenPool := NewTokenPool(10 * time.Second)
+	messageStorage := NewMessageStorage()
+	tokenStorage := NewTokenStorage(10 * time.Second)
 
 	return &Engine{
 		Ctx:                   ctx,
 		cancelFunc:            cancelFunc,
 		Gateway:               gateway,
-		BottleAddHandler:      BottleAddHandler(tokenPool, messagePool),
-		BottleGetHandler:      BottleGetHandler(tokenPool, messagePool),
-		BottleGenerateHandler: BottleGenerateHandler(messagePool),
+		BottleAddHandler:      BottleAddHandler(tokenStorage, messageStorage),
+		BottleGetHandler:      BottleGetHandler(tokenStorage, messageStorage),
+		BottleGenerateHandler: BottleGenerateHandler(messageStorage),
 	}
 }
 
@@ -154,25 +154,25 @@ func (g *Gateway) Get() <-chan *Bottle {
 	return g.Out
 }
 
-func BottleAddHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFunc {
+func BottleAddHandler(tokenStorage *TokenStorage, messageStorage *MessageStorage) HandlerFunc {
 	return func(ctx context.Context, b *Bottle) {
-		if err := tokenPool.Use(b.Token); err != nil {
+		if err := tokenStorage.Use(b.Token); err != nil {
 			return
 		}
 
-		if err := messagePool.Add(b.Message); err != nil {
+		if err := messageStorage.Add(b.Message); err != nil {
 			return
 		}
 	}
 }
 
-func BottleGetHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFunc {
+func BottleGetHandler(tokenStorage *TokenStorage, messageStorage *MessageStorage) HandlerFunc {
 	size := 10
 	seed := 42
 	gen := NewRandomStringGenerator(size, seed)
 
 	return func(ctx context.Context, b *Bottle) {
-		message, err := messagePool.Get()
+		message, err := messageStorage.Get()
 		if err != nil {
 			return
 		}
@@ -182,7 +182,7 @@ func BottleGetHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFun
 		token := &Token{
 			Str: &tokenStr,
 		}
-		for tokenPool.Add(token) != nil {
+		for tokenStorage.Add(token) != nil {
 			tokenStr = gen.Generate()
 			token = &Token{
 				Str: &tokenStr,
@@ -192,8 +192,8 @@ func BottleGetHandler(tokenPool *TokenPool, messagePool *MessagePool) HandlerFun
 	}
 }
 
-func BottleGenerateHandler(messagePool *MessagePool) HandlerFunc {
+func BottleGenerateHandler(messageStorage *MessageStorage) HandlerFunc {
 	return func(ctx context.Context, b *Bottle) {
-		messagePool.Add(b.Message)
+		messageStorage.Add(b.Message)
 	}
 }

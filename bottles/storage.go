@@ -6,30 +6,30 @@ import (
 	"sync"
 )
 
-type MessagePool struct {
+type MessageStorage struct {
 	messages []*Message
 	mux      *sync.Mutex
 }
 
-type TokenPool struct {
+type TokenStorage struct {
 	expiration time.Duration
 	tokens     *sync.Map
 }
 
-func NewMessagePool() *MessagePool {
-	return &MessagePool{
+func NewMessageStorage() *MessageStorage {
+	return &MessageStorage{
 		mux: &sync.Mutex{},
 	}
 }
 
-func NewTokenPool(expiration time.Duration) *TokenPool {
-	return &TokenPool{
+func NewTokenStorage(expiration time.Duration) *TokenStorage {
+	return &TokenStorage{
 		expiration: expiration,
 		tokens:     &sync.Map{},
 	}
 }
 
-func (p *MessagePool) Get() (*Message, error) {
+func (p *MessageStorage) Get() (*Message, error) {
 	p.mux.Lock()
 	if len(p.messages) == 0 {
 		p.mux.Unlock()
@@ -42,7 +42,7 @@ func (p *MessagePool) Get() (*Message, error) {
 	return m, nil
 }
 
-func (p *MessagePool) Add(m *Message) error {
+func (p *MessageStorage) Add(m *Message) error {
 	if m.Text == nil {
 		return fmt.Errorf("Message Text is Nil")
 	}
@@ -53,7 +53,7 @@ func (p *MessagePool) Add(m *Message) error {
 	return nil
 }
 
-func (p *TokenPool) Use(t *Token) (error) {
+func (p *TokenStorage) Use(t *Token) (error) {
 	if _, ok := p.tokens.LoadAndDelete(*t.Str); !ok {
 		return fmt.Errorf("Token is Invalid")
 	}
@@ -61,13 +61,13 @@ func (p *TokenPool) Use(t *Token) (error) {
 	return nil
 }
 
-func (p *TokenPool) Add(t *Token) (error) {
+func (p *TokenStorage) Add(t *Token) (error) {
 	if t.Str == nil {
 		return fmt.Errorf("Token is Nil")
 	}
 
 	if _, ok := p.tokens.LoadOrStore(*t.Str, true); ok {
-		return fmt.Errorf("Pool has Same Token")
+		return fmt.Errorf("Storage has Same Token")
 	}
 
 	go func() {

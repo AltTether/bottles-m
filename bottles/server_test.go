@@ -106,37 +106,37 @@ func TestGetBottleRoute(t *testing.T) {
 }
 
 func CreateTestEngine(n int) *Engine {
-	messagePool := CreateTestMessagePool(n)
-	tokenPool := CreateTestTokenPool(n)
+	messageStorage := CreateTestMessageStorage(n)
+	tokenStorage := CreateTestTokenStorage(n)
 
 	engine := New()
 
-	engine.SetBottleGetHandler(BottleGetHandler(tokenPool, messagePool))
-	engine.SetBottleAddHandler(BottleAddHandler(tokenPool, messagePool))
+	engine.SetBottleGetHandler(BottleGetHandler(tokenStorage, messageStorage))
+	engine.SetBottleAddHandler(BottleAddHandler(tokenStorage, messageStorage))
 
 	return engine
 }
 
-func CreateTestTokenPool(n int) *TokenPool {
-	tokenPool := NewTokenPool(2 * time.Minute)
+func CreateTestTokenStorage(n int) *TokenStorage {
+	tokenStorage := NewTokenStorage(2 * time.Minute)
 	for i := 0; i < n; i++ {
 		str := testTokenStrFormatter(i)
-		_ = tokenPool.Add(&Token{
+		_ = tokenStorage.Add(&Token{
 			Str: &str,
 		})
 	}
-	return tokenPool
+	return tokenStorage
 }
 
-func CreateTestMessagePool(n int) *MessagePool {
-	messagePool := NewMessagePool()
+func CreateTestMessageStorage(n int) *MessageStorage {
+	messageStorage := NewMessageStorage()
 	for i := 0; i < n; i++ {
 		text := testMessageText
-		_ = messagePool.Add(&Message{
+		_ = messageStorage.Add(&Message{
 			Text: &text,
 		})
 	}
-	return messagePool
+	return messageStorage
 }
 
 type TestResponseRecorder struct {

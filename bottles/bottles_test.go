@@ -39,11 +39,11 @@ func TestAddFromGateway(t *testing.T) {
 func TestGenerateEmptyBottle(t *testing.T) {
 	engine := New()
 
-	messagePool := CreateTestMessagePool(0)
-	tokenPool := CreateTestTokenPool(0)
+	messageStorage := CreateTestMessageStorage(0)
+	tokenStorage := CreateTestTokenStorage(0)
 
-	bottleGetHandlerFunc := BottleGetHandler(tokenPool, messagePool)
-	bottleGenerateHandlerFunc := BottleGenerateHandler(messagePool)
+	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
+	bottleGenerateHandlerFunc := BottleGenerateHandler(messageStorage)
 
 	engine.SetBottleGetHandler(bottleGetHandlerFunc)
 	engine.SetBottleGenerateHandler(bottleGenerateHandlerFunc)

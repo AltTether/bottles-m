@@ -41,16 +41,16 @@ func (g *RandomStringGenerator) Generate() string {
 type EmptyMessageAdder struct {
 	ctx          context.Context
 	cancelFunc   context.CancelFunc
-	messagePool  *MessagePool
+	messageStorage  *MessageStorage
 	intervalTime time.Duration
 }
 
-func NewEmptyMessageAdder(messagePool *MessagePool, intervalTime time.Duration) *EmptyMessageAdder {
+func NewEmptyMessageAdder(messageStorage *MessageStorage, intervalTime time.Duration) *EmptyMessageAdder {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &EmptyMessageAdder{
 		ctx:          ctx,
 		cancelFunc:   cancel,
-		messagePool:  messagePool,
+		messageStorage:  messageStorage,
 		intervalTime: intervalTime,
 	}
 }
@@ -69,7 +69,7 @@ func (a *EmptyMessageAdder) Run() {
 				m := &Message{
 					Text: &text,
 				}
-				if a.messagePool.Add(m) != nil {
+				if a.messageStorage.Add(m) != nil {
 					break
 				}
 			default:
