@@ -10,41 +10,41 @@ import (
 )
 
 
-func TestMessagePool(t *testing.T) {
-	pool := NewMessagePool()
+func TestMessageStorage(t *testing.T) {
+	storage := NewMessageStorage()
 
 	text := "This is a Test Message"
 	message := &Message{
 		Text: &text,
 	}
 	
-	_ = pool.Add(message)
-	messageFromPool, _ := pool.Get()
+	_ = storage.Add(message)
+	messageFromStorage, _ := storage.Get()
 
-	assert.Equal(t, *messageFromPool.Text, text)
+	assert.Equal(t, *messageFromStorage.Text, text)
 }
 
-func TestMessagePoolPostNilMessageText(t *testing.T) {
-	pool := NewMessagePool()
+func TestMessageStoragePostNilMessageText(t *testing.T) {
+	storage := NewMessageStorage()
 
 	message := &Message{
 		Text: nil,
 	}
 
-	err := pool.Add(message)
+	err := storage.Add(message)
 	assert.Equal(t, fmt.Errorf("Message Text is Nil"), err)
 }
 
-func TestGetMessageFromEmptyPool(t *testing.T) {
-	pool := NewMessagePool()
+func TestGetMessageFromEmptyStorage(t *testing.T) {
+	storage := NewMessageStorage()
 
-	message, err := pool.Get()
+	message, err := storage.Get()
 	assert.Equal(t, err, fmt.Errorf("No Messages"))
 	assert.Nil(t, message)
 }
 
-func TestMessagePoolAddAndGetInGoRoutine(t *testing.T) {
-	pool := NewMessagePool()
+func TestMessageStorageAddAndGetInGoRoutine(t *testing.T) {
+	storage := NewMessageStorage()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cnt := 0
@@ -63,7 +63,7 @@ func TestMessagePoolAddAndGetInGoRoutine(t *testing.T) {
 					message := &Message{
 						Text: &text,
 					}
-					pool.Add(message)
+					storage.Add(message)
 				default:
 					break
 				}
@@ -79,7 +79,7 @@ func TestMessagePoolAddAndGetInGoRoutine(t *testing.T) {
 				case <-ctx.Done():
 					break Loop
 				case <-ticker.C:
-					if _, err := pool.Get(); err == nil {
+					if _, err := storage.Get(); err == nil {
 						cnt++
 					}
 				default:
@@ -95,23 +95,23 @@ func TestMessagePoolAddAndGetInGoRoutine(t *testing.T) {
 	assert.Greater(t, cnt, 0)
 }
 
-func TestTokenPool(t *testing.T) {
+func TestTokenStorage(t *testing.T) {
 	expiration := 2 * time.Minute
-	pool := NewTokenPool(expiration)
+	storage := NewTokenStorage(expiration)
 
 	tokenStr := "TesT"
 	token := &Token{
 		Str: &tokenStr,
 	}
 
-	_ = pool.Add(token)
-	err := pool.Use(token)
+	_ = storage.Add(token)
+	err := storage.Use(token)
 	assert.Nil(t, err)
 }
 
-func TestTokenPoolAddAndUseInGoRoutine(t *testing.T) {
+func TestTokenStorageAddAndUseInGoRoutine(t *testing.T) {
 	expiration := 2 * time.Minute
-	pool := NewTokenPool(expiration)
+	storage := NewTokenStorage(expiration)
 
 	seed := 42
 	size := 10
@@ -124,34 +124,34 @@ func TestTokenPoolAddAndUseInGoRoutine(t *testing.T) {
 			token := &Token{
 				Str: &tokenStr,
 			}
-			pool.Add(token)
+			storage.Add(token)
 		}()
 
 		go func() {
 			token := &Token{
 				Str: &tokenStr,
 			}
-			pool.Use(token)
+			storage.Use(token)
 		}()
 	}
 }
 
-func TestTokenPoolInvalidToken(t *testing.T) {
+func TestTokenStorageInvalidToken(t *testing.T) {
 	expiration := 2 * time.Minute
-	pool := NewTokenPool(expiration)
+	storage := NewTokenStorage(expiration)
 
 	tokenStr := "TesT"
 	token := &Token{
 		Str: &tokenStr,
 	}
 
-	err := pool.Use(token)
+	err := storage.Use(token)
 	assert.Equal(t, fmt.Errorf("Token is Invalid"), err)
 }
 
-func TestTokenPoolSameToken(t *testing.T) {
+func TestTokenStorageSameToken(t *testing.T) {
 	expiration := 2 * time.Minute
-	pool := NewTokenPool(expiration)
+	storage := NewTokenStorage(expiration)
 
 	tokenStr1 := "TesT"
 	tokenStr2 := "TesT"
@@ -162,36 +162,36 @@ func TestTokenPoolSameToken(t *testing.T) {
 		Str: &tokenStr2,
 	}
 
-	_ = pool.Add(token1)
-	err := pool.Add(token2)
-	assert.Equal(t, err, fmt.Errorf("Pool has Same Token"))
+	_ = storage.Add(token1)
+	err := storage.Add(token2)
+	assert.Equal(t, err, fmt.Errorf("Storage has Same Token"))
 }
 
-func TestTokenPoolTokenExpiration(t *testing.T) {
+func TestTokenStorageTokenExpiration(t *testing.T) {
 	expiration := 10 * time.Millisecond
-	pool := NewTokenPool(expiration)
+	storage := NewTokenStorage(expiration)
 
 	tokenStr := "TesT"
 	token := &Token{
 		Str: &tokenStr,
 	}
 
-	_ = pool.Add(token)
+	_ = storage.Add(token)
 	time.Sleep(50 * time.Millisecond)
-	err := pool.Use(token)
+	err := storage.Use(token)
 
 	assert.Equal(t, fmt.Errorf("Token is Invalid"), err)
 }
 
-func TestTokenPoolAddNilToken(t *testing.T) {
+func TestTokenStorageAddNilToken(t *testing.T) {
 	expiration := 10 * time.Second
-	pool := NewTokenPool(expiration)
+	storage := NewTokenStorage(expiration)
 
 	token := &Token{
 		Str: nil,
 	}
 
-	err := pool.Add(token)
+	err := storage.Add(token)
 
 	assert.Equal(t, fmt.Errorf("Token is Nil"), err)
 }

@@ -61,19 +61,19 @@ func TestGenerateRandomStringsInGoroutine(t *testing.T) {
 }
 
 func TestEmptyMessageAdder(t *testing.T) {
-	messagePool := CreateTestMessagePool(0)
+	messageStorage := CreateTestMessageStorage(0)
 	intervalTime := 50 * time.Millisecond
-	gen := NewEmptyMessageAdder(messagePool, intervalTime)
+	gen := NewEmptyMessageAdder(messageStorage, intervalTime)
 
 	gen.Run()
 	time.Sleep(100 * time.Millisecond)
 	gen.Stop()
 
 	cnt := 0
-	_, err := messagePool.Get()
+	_, err := messageStorage.Get()
 	for err == nil {
 		cnt++;
-		_, err = messagePool.Get()
+		_, err = messageStorage.Get()
 	}
 
 	assert.Less(t, 0, cnt)
