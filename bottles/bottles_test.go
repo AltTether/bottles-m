@@ -39,8 +39,8 @@ func TestAddFromGateway(t *testing.T) {
 func TestGenerateEmptyBottle(t *testing.T) {
 	engine := New()
 
-	messageStorage := CreateTestMessageStorage(0)
-	tokenStorage := CreateTestTokenStorage(0)
+	messageStorage := createTestMessageStorageWithMessages(make([]*Message, 0))
+	tokenStorage := createTestTokenStorageWithTokens(make([]*Token, 0))
 
 	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
 	bottleGenerateHandlerFunc := BottleGenerateHandler(messageStorage)
@@ -101,4 +101,64 @@ func TestDefaultEngine(t *testing.T) {
 
 		gateway.Add(b)
 	}
+}
+
+func CreateTestEngine() *Engine {
+	n := 10
+
+	return CreateTestEngineWithData(createTestMessages(n), createTestTokens(n))
+}
+
+func CreateTestEngineWithData(messages []*Message, tokens []*Token) *Engine {
+	messageStorage := createTestMessageStorageWithMessages(messages)
+	tokenStorage := createTestTokenStorageWithTokens(tokens)
+
+	engine := New()
+
+	engine.SetBottleGetHandler(BottleGetHandler(tokenStorage, messageStorage))
+	engine.SetBottleAddHandler(BottleAddHandler(tokenStorage, messageStorage))
+
+	return engine
+}
+
+func createTestMessageStorageWithMessages(ms []*Message) *MessageStorage{
+	s := NewMessageStorage()
+	for _, m := range ms {
+		_ = s.Add(m)
+	}
+
+	return s
+}
+
+func createTestTokenStorageWithTokens(ts []*Token) *TokenStorage {
+	s := NewTokenStorage(2 * time.Minute)
+	for _, t := range ts {
+		_ = s.Add(t)
+	}
+
+	return s
+}
+
+func createTestMessages(n int) []*Message {
+	ms := make([]*Message, n)
+	for i := 0; i < n; i++ {
+		text := testMessageText
+		ms[i] = &Message{
+			Text: &text,
+		}
+	}
+
+	return ms
+}
+
+func createTestTokens(n int) []*Token {
+	ts := make([]*Token, n)
+	for i := 0; i < n; i++ {
+		str := testTokenStrFormatter(i)
+		ts[i] = &Token{
+			Str: &str,
+		}
+	}
+
+	return ts
 }
