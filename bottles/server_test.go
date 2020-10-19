@@ -27,8 +27,9 @@ func init() {
 }
 
 func TestGetBottleRouteEmpty(t *testing.T) {
-	engine := New()
-	r := NewServer(engine.Gateway)
+	cfg := NewTestConfig()
+	engine := New(cfg)
+	r := NewServer(engine.Gateway, cfg)
 
 	engine.Run()
 	defer engine.Stop()
@@ -43,7 +44,8 @@ func TestGetBottleRouteEmpty(t *testing.T) {
 
 func TestGetBottleStreamRoute(t *testing.T) {
 	engine := CreateTestEngine()
-	r := NewServer(engine.Gateway)
+	cfg := engine.Config
+	r := NewServer(engine.Gateway, cfg)
 
 	engine.Run()
 	defer engine.Stop()
@@ -63,7 +65,8 @@ func TestGetBottleStreamRoute(t *testing.T) {
 
 func TestPostBottleRoute(t *testing.T) {
 	engine := CreateTestEngine()
-	r := NewServer(engine.Gateway)
+	cfg := engine.Config
+	r := NewServer(engine.Gateway, cfg)
 
 	engine.Run()
 	defer engine.Stop()
@@ -89,7 +92,8 @@ func TestPostBottleRoute(t *testing.T) {
 
 func TestGetBottleRoute(t *testing.T) {
 	engine := CreateTestEngine()
-	r := NewServer(engine.Gateway)
+	cfg := engine.Config
+	r := NewServer(engine.Gateway, cfg)
 
 	engine.Run()
 	defer engine.Stop()
