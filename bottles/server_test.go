@@ -42,8 +42,7 @@ func TestGetBottleRouteEmpty(t *testing.T) {
 }
 
 func TestGetBottleStreamRoute(t *testing.T) {
-	n := 10
-	engine := CreateTestEngine(n)
+	engine := CreateTestEngine()
 	r := NewServer(engine.Gateway)
 
 	engine.Run()
@@ -63,8 +62,7 @@ func TestGetBottleStreamRoute(t *testing.T) {
 }
 
 func TestPostBottleRoute(t *testing.T) {
-	n := 10
-	engine := CreateTestEngine(n)
+	engine := CreateTestEngine()
 	r := NewServer(engine.Gateway)
 
 	engine.Run()
@@ -73,7 +71,7 @@ func TestPostBottleRoute(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	message := testMessageText
-	token := testTokenStrFormatter(n - 1)
+	token := testTokenStrFormatter(0)
 	testRequestBody := &RequestBody{
 		Message: &message,
 		Token:   &token,
@@ -90,8 +88,7 @@ func TestPostBottleRoute(t *testing.T) {
 }
 
 func TestGetBottleRoute(t *testing.T) {
-	n := 10
-	engine := CreateTestEngine(n)
+	engine := CreateTestEngine()
 	r := NewServer(engine.Gateway)
 
 	engine.Run()
@@ -103,40 +100,6 @@ func TestGetBottleRoute(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	assert.Contains(t, w.Body.String(), "\"message\":{\"text\":\"test\"}")
-}
-
-func CreateTestEngine(n int) *Engine {
-	messageStorage := CreateTestMessageStorage(n)
-	tokenStorage := CreateTestTokenStorage(n)
-
-	engine := New()
-
-	engine.SetBottleGetHandler(BottleGetHandler(tokenStorage, messageStorage))
-	engine.SetBottleAddHandler(BottleAddHandler(tokenStorage, messageStorage))
-
-	return engine
-}
-
-func CreateTestTokenStorage(n int) *TokenStorage {
-	tokenStorage := NewTokenStorage(2 * time.Minute)
-	for i := 0; i < n; i++ {
-		str := testTokenStrFormatter(i)
-		_ = tokenStorage.Add(&Token{
-			Str: &str,
-		})
-	}
-	return tokenStorage
-}
-
-func CreateTestMessageStorage(n int) *MessageStorage {
-	messageStorage := NewMessageStorage()
-	for i := 0; i < n; i++ {
-		text := testMessageText
-		_ = messageStorage.Add(&Message{
-			Text: &text,
-		})
-	}
-	return messageStorage
 }
 
 type TestResponseRecorder struct {

@@ -61,7 +61,7 @@ func TestGenerateRandomStringsInGoroutine(t *testing.T) {
 }
 
 func TestEmptyMessageAdder(t *testing.T) {
-	messageStorage := CreateTestMessageStorage(0)
+	messageStorage := createTestMessageStorageWithMessages(make([]*Message, 0))
 	intervalTime := 50 * time.Millisecond
 	gen := NewEmptyMessageAdder(messageStorage, intervalTime)
 
