@@ -11,18 +11,16 @@ import (
 
 
 func TestGenerateRandomString(t *testing.T) {
-	size := 10
-	seed := 42
+	cfg := NewTestConfig()
+	gen := NewRandomStringGenerator(cfg.TokenSize, cfg.Seed)
 
-	gen := NewRandomStringGenerator(size, seed)
 	s := gen.Generate()
 	assert.Equal(t, size, len(s))
 }
 
 func TestGenerateRandomStrings(t *testing.T) {
-	size := 10
-	seed := 42
-	gen := NewRandomStringGenerator(size, seed)
+	cfg := NewTestConfig()
+	gen := NewRandomStringGenerator(cfg.TokenSize, cfg.Seed)
 
 	n := 5
 	randomStrings := make([]string, n)
@@ -34,9 +32,8 @@ func TestGenerateRandomStrings(t *testing.T) {
 }
 
 func TestGenerateRandomStringsInGoroutine(t *testing.T) {
-	size := 10
-	seed := 42
-	gen := NewRandomStringGenerator(size, seed)
+	cfg := NewTestConfig()
+	gen := NewRandomStringGenerator(cfg.TokenSize, cfg.Seed)
 
 	n := 5
 	randomStrings := make([]string, n)

@@ -15,7 +15,7 @@ type RequestBody struct {
 	Token   *string `json:"token" binding:"required"`
 }
 
-func GetBottleHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
+func GetBottleHandlerFunc(gateway *Gateway) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithCancel(context.Background())
 		go func() {
@@ -45,7 +45,7 @@ func GetBottleHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
 	}
 }
 
-func GetBottleStreamHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
+func GetBottleStreamHandlerFunc(gateway *Gateway) gin.HandlerFunc {
 	sendDelay := time.Duration(cfg.SendBottleDelay)
 	return func(c *gin.Context) {
 		clientGone := c.Writer.CloseNotify()
