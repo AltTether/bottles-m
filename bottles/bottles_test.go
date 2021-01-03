@@ -9,7 +9,8 @@ import (
 )
 
 func TestSetHandlersToEngine(t *testing.T) {
-	engine := New()
+	cfg := NewTestConfig()
+	engine := New(cfg)
 
 	bottleAddHandlerFunc := func(ctx context.Context, b *Bottle) {}
 	bottleGetHandlerFunc := func(ctx context.Context, b *Bottle) {}
@@ -19,14 +20,16 @@ func TestSetHandlersToEngine(t *testing.T) {
 }
 
 func TestRunEngineWithNoHandler(t *testing.T) {
-	engine := New()
+	cfg := NewTestConfig()
+	engine := New(cfg)
 
 	engine.Run()
 	engine.Stop()
 }
 
 func TestAddFromGateway(t *testing.T) {
-	engine := New()
+	cfg := NewTestConfig()
+	engine := New(cfg)
 	gateway := engine.Gateway
 
 	engine.Run()
@@ -37,10 +40,11 @@ func TestAddFromGateway(t *testing.T) {
 }
 
 func TestGenerateEmptyBottle(t *testing.T) {
-	engine := New()
+	cfg := NewTestConfig()
+	engine := New(cfg)
 
 	messageStorage := createTestMessageStorageWithMessages(make([]*Message, 0))
-	tokenStorage := createTestTokenStorageWithTokens(make([]*Token, 0))
+	tokenStorage := createTestTokenStorageWithTokens(make([]*Token, 0), cfg.TokenExpiration)
 
 	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
 	bottleGenerateHandlerFunc := BottleGenerateHandler(messageStorage)
@@ -71,6 +75,9 @@ Loop:
 
 func TestDefaultEngine(t *testing.T) {
 	engine := DefaultEngine()
+
+	cfg := NewTestConfig()
+	engine.SetConfig(cfg)
 	gateway := engine.Gateway
 
 	engine.Run()
@@ -110,10 +117,11 @@ func CreateTestEngine() *Engine {
 }
 
 func CreateTestEngineWithData(messages []*Message, tokens []*Token) *Engine {
-	messageStorage := createTestMessageStorageWithMessages(messages)
-	tokenStorage := createTestTokenStorageWithTokens(tokens)
+	cfg := NewTestConfig()
+	engine := New(cfg)
 
-	engine := New()
+	messageStorage := createTestMessageStorageWithMessages(messages)
+	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
 
 	engine.SetBottleGetHandler(BottleGetHandler(tokenStorage, messageStorage))
 	engine.SetBottleAddHandler(BottleAddHandler(tokenStorage, messageStorage))
@@ -130,8 +138,8 @@ func createTestMessageStorageWithMessages(ms []*Message) *MessageStorage{
 	return s
 }
 
-func createTestTokenStorageWithTokens(ts []*Token) *TokenStorage {
-	s := NewTokenStorage(2 * time.Minute)
+func createTestTokenStorageWithTokens(ts []*Token, expiration time.Duration) *TokenStorage {
+	s := NewTokenStorage(expiration)
 	for _, t := range ts {
 		_ = s.Add(t)
 	}

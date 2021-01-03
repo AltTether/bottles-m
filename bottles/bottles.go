@@ -22,6 +22,7 @@ type Bottle struct {
 type Engine struct {
 	Ctx                   context.Context
 	cancelFunc            context.CancelFunc
+	Config                *Config
 	Gateway               *Gateway
 	BottleAddHandler      HandlerFunc
 	BottleGetHandler      HandlerFunc
@@ -35,7 +36,7 @@ type Gateway struct {
 	Out chan *Bottle
 }
 
-func New() *Engine {
+func New(cfg *Config) *Engine {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	gateway := &Gateway{
 		In:  make(chan *Bottle),
@@ -45,6 +46,7 @@ func New() *Engine {
 	return &Engine{
 		Ctx:              ctx,
 		cancelFunc:       cancelFunc,
+		Config:           cfg,
 		Gateway:          gateway,
 		BottleAddHandler: func(ctx context.Context, b *Bottle) {},
 		BottleGetHandler: func(ctx context.Context, b *Bottle) {},
@@ -53,6 +55,7 @@ func New() *Engine {
 }
 
 func DefaultEngine() *Engine{
+	cfg := NewConfig()
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	gateway := &Gateway{
 		In:  make(chan *Bottle),
@@ -60,16 +63,21 @@ func DefaultEngine() *Engine{
 	}
 
 	messageStorage := NewMessageStorage()
-	tokenStorage := NewTokenStorage(10 * time.Second)
+	tokenStorage := NewTokenStorage(cfg.TokenExpiration)
 
 	return &Engine{
 		Ctx:                   ctx,
 		cancelFunc:            cancelFunc,
+		Config:                cfg,
 		Gateway:               gateway,
 		BottleAddHandler:      BottleAddHandler(tokenStorage, messageStorage),
 		BottleGetHandler:      BottleGetHandler(tokenStorage, messageStorage),
 		BottleGenerateHandler: BottleGenerateHandler(messageStorage),
 	}
+}
+
+func (e *Engine) SetConfig(c *Config) {
+	e.Config = c
 }
 
 func (e *Engine) SetBottleAddHandler(h HandlerFunc) {
@@ -120,7 +128,7 @@ func (e *Engine) Run() {
 	}()
 
 	go func() {
-		t := time.NewTicker(10 * time.Millisecond)
+		t := time.NewTicker(e.Config.GenerateBottleCoolTime)
 		defer t.Stop()
 	Loop:
 		for {

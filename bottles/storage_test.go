@@ -96,8 +96,8 @@ func TestMessageStorageAddAndGetInGoRoutine(t *testing.T) {
 }
 
 func TestTokenStorage(t *testing.T) {
-	expiration := 2 * time.Minute
-	storage := NewTokenStorage(expiration)
+	cfg := NewTestConfig()
+	storage := NewTokenStorage(cfg.TokenExpiration)
 
 	tokenStr := "TesT"
 	token := &Token{
@@ -110,12 +110,10 @@ func TestTokenStorage(t *testing.T) {
 }
 
 func TestTokenStorageAddAndUseInGoRoutine(t *testing.T) {
-	expiration := 2 * time.Minute
-	storage := NewTokenStorage(expiration)
+	cfg := NewTestConfig()
+	storage := NewTokenStorage(cfg.TokenExpiration)
 
-	seed := 42
-	size := 10
-	gen := NewRandomStringGenerator(size, seed)
+	gen := NewRandomStringGenerator(cfg.TokenSize, cfg.Seed)
 
 	n := 10
 	for i := 0; i < n; i++ {
@@ -137,8 +135,8 @@ func TestTokenStorageAddAndUseInGoRoutine(t *testing.T) {
 }
 
 func TestTokenStorageInvalidToken(t *testing.T) {
-	expiration := 2 * time.Minute
-	storage := NewTokenStorage(expiration)
+	cfg := NewTestConfig()
+	storage := NewTokenStorage(cfg.TokenExpiration)
 
 	tokenStr := "TesT"
 	token := &Token{
@@ -150,8 +148,8 @@ func TestTokenStorageInvalidToken(t *testing.T) {
 }
 
 func TestTokenStorageSameToken(t *testing.T) {
-	expiration := 2 * time.Minute
-	storage := NewTokenStorage(expiration)
+	cfg := NewTestConfig()
+	storage := NewTokenStorage(cfg.TokenExpiration)
 
 	tokenStr1 := "TesT"
 	tokenStr2 := "TesT"
@@ -168,8 +166,8 @@ func TestTokenStorageSameToken(t *testing.T) {
 }
 
 func TestTokenStorageTokenExpiration(t *testing.T) {
-	expiration := 10 * time.Millisecond
-	storage := NewTokenStorage(expiration)
+	cfg := NewTestConfig()
+	storage := NewTokenStorage(cfg.TokenExpiration)
 
 	tokenStr := "TesT"
 	token := &Token{
@@ -184,8 +182,8 @@ func TestTokenStorageTokenExpiration(t *testing.T) {
 }
 
 func TestTokenStorageAddNilToken(t *testing.T) {
-	expiration := 10 * time.Second
-	storage := NewTokenStorage(expiration)
+	cfg := NewTestConfig()
+	storage := NewTokenStorage(cfg.TokenExpiration)
 
 	token := &Token{
 		Str: nil,
