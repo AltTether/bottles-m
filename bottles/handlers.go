@@ -81,10 +81,10 @@ func PostBottleHandlerFunc(gateway *Gateway) gin.HandlerFunc {
 
 		bottle := &Bottle{
 			Message: &Message{
-				Text: body.Message,
+				Text: *body.Message,
 			},
 			Token:   &Token{
-				Str: body.Token,
+				Str: *body.Token,
 			},
 		}
 

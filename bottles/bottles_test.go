@@ -84,7 +84,7 @@ func TestDefaultEngine(t *testing.T) {
 	defer engine.Stop()
 
 	n := 10
-	tokenStrs := make([]*string, n)
+	tokenStrs := make([]string, n)
 	for i := 0; i < n; i++ {
 		bottle := <-gateway.Get()
 		tokenStrs[i] = bottle.Token.Str
@@ -98,7 +98,7 @@ func TestDefaultEngine(t *testing.T) {
 
 		messageText := ""
 		message := &Message{
-			Text: &messageText,
+			Text: messageText,
 		}
 
 		b := &Bottle{
@@ -152,7 +152,7 @@ func createTestMessages(n int) []*Message {
 	for i := 0; i < n; i++ {
 		text := testMessageText
 		ms[i] = &Message{
-			Text: &text,
+			Text: text,
 		}
 	}
 
@@ -164,7 +164,7 @@ func createTestTokens(n int) []*Token {
 	for i := 0; i < n; i++ {
 		str := testTokenStrFormatter(i)
 		ts[i] = &Token{
-			Str: &str,
+			Str: str,
 		}
 	}
 

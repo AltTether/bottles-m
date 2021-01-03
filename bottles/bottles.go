@@ -7,11 +7,11 @@ import (
 
 
 type Message struct {
-	Text *string
+	Text string
 }
 
 type Token struct {
-	Str *string
+	Str string
 }
 
 type Bottle struct {
@@ -139,7 +139,7 @@ func (e *Engine) Run() {
 				text := ""
 				b := &Bottle{
 					Message: &Message{
-						Text: &text,
+						Text: text,
 					},
 				}
 				e.BottleGenerateHandler(e.Ctx, b)
@@ -188,12 +188,12 @@ func BottleGetHandler(tokenStorage *TokenStorage, messageStorage *MessageStorage
 
 		tokenStr := gen.Generate()
 		token := &Token{
-			Str: &tokenStr,
+			Str: tokenStr,
 		}
 		for tokenStorage.Add(token) != nil {
 			tokenStr = gen.Generate()
 			token = &Token{
-				Str: &tokenStr,
+				Str: tokenStr,
 			}
 		}
 		b.Token = token

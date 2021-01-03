@@ -43,10 +43,6 @@ func (p *MessageStorage) Get() (*Message, error) {
 }
 
 func (p *MessageStorage) Add(m *Message) error {
-	if m.Text == nil {
-		return fmt.Errorf("Message Text is Nil")
-	}
-
 	p.mux.Lock()
 	p.messages = append(p.messages, m)
 	p.mux.Unlock()
@@ -54,7 +50,7 @@ func (p *MessageStorage) Add(m *Message) error {
 }
 
 func (p *TokenStorage) Use(t *Token) (error) {
-	if _, ok := p.tokens.LoadAndDelete(*t.Str); !ok {
+	if _, ok := p.tokens.LoadAndDelete(t.Str); !ok {
 		return fmt.Errorf("Token is Invalid")
 	}
 	
@@ -62,11 +58,11 @@ func (p *TokenStorage) Use(t *Token) (error) {
 }
 
 func (p *TokenStorage) Add(t *Token) (error) {
-	if t.Str == nil {
-		return fmt.Errorf("Token is Nil")
+	if t.Str == "" {
+		return fmt.Errorf("Token is Empty")
 	}
 
-	if _, ok := p.tokens.LoadOrStore(*t.Str, true); ok {
+	if _, ok := p.tokens.LoadOrStore(t.Str, true); ok {
 		return fmt.Errorf("Storage has Same Token")
 	}
 

@@ -67,7 +67,7 @@ func (a *EmptyMessageAdder) Run() {
 			case <-t.C:
 				text := ""
 				m := &Message{
-					Text: &text,
+					Text: text,
 				}
 				if a.messageStorage.Add(m) != nil {
 					break
