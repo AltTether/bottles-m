@@ -15,24 +15,13 @@ func TestMessageStorage(t *testing.T) {
 
 	text := "This is a Test Message"
 	message := &Message{
-		Text: &text,
+		Text: text,
 	}
 	
 	_ = storage.Add(message)
 	messageFromStorage, _ := storage.Get()
 
-	assert.Equal(t, *messageFromStorage.Text, text)
-}
-
-func TestMessageStoragePostNilMessageText(t *testing.T) {
-	storage := NewMessageStorage()
-
-	message := &Message{
-		Text: nil,
-	}
-
-	err := storage.Add(message)
-	assert.Equal(t, fmt.Errorf("Message Text is Nil"), err)
+	assert.Equal(t, messageFromStorage.Text, text)
 }
 
 func TestGetMessageFromEmptyStorage(t *testing.T) {
@@ -61,7 +50,7 @@ func TestMessageStorageAddAndGetInGoRoutine(t *testing.T) {
 				case <-ticker.C:
 					text := "This is a Test Message"
 					message := &Message{
-						Text: &text,
+						Text: text,
 					}
 					storage.Add(message)
 				default:
@@ -101,7 +90,7 @@ func TestTokenStorage(t *testing.T) {
 
 	tokenStr := "TesT"
 	token := &Token{
-		Str: &tokenStr,
+		Str: tokenStr,
 	}
 
 	_ = storage.Add(token)
@@ -120,14 +109,14 @@ func TestTokenStorageAddAndUseInGoRoutine(t *testing.T) {
 		tokenStr := gen.Generate()
 		go func() {
 			token := &Token{
-				Str: &tokenStr,
+				Str: tokenStr,
 			}
 			storage.Add(token)
 		}()
 
 		go func() {
 			token := &Token{
-				Str: &tokenStr,
+				Str: tokenStr,
 			}
 			storage.Use(token)
 		}()
@@ -140,7 +129,7 @@ func TestTokenStorageInvalidToken(t *testing.T) {
 
 	tokenStr := "TesT"
 	token := &Token{
-		Str: &tokenStr,
+		Str: tokenStr,
 	}
 
 	err := storage.Use(token)
@@ -154,10 +143,10 @@ func TestTokenStorageSameToken(t *testing.T) {
 	tokenStr1 := "TesT"
 	tokenStr2 := "TesT"
 	token1 := &Token{
-		Str: &tokenStr1,
+		Str: tokenStr1,
 	}
 	token2 := &Token{
-		Str: &tokenStr2,
+		Str: tokenStr2,
 	}
 
 	_ = storage.Add(token1)
@@ -171,7 +160,7 @@ func TestTokenStorageTokenExpiration(t *testing.T) {
 
 	tokenStr := "TesT"
 	token := &Token{
-		Str: &tokenStr,
+		Str: tokenStr,
 	}
 
 	_ = storage.Add(token)
@@ -185,11 +174,9 @@ func TestTokenStorageAddNilToken(t *testing.T) {
 	cfg := NewTestConfig()
 	storage := NewTokenStorage(cfg.TokenExpiration)
 
-	token := &Token{
-		Str: nil,
-	}
+	token := &Token{}
 
 	err := storage.Add(token)
 
-	assert.Equal(t, fmt.Errorf("Token is Nil"), err)
+	assert.Equal(t, fmt.Errorf("Token is Empty"), err)
 }
