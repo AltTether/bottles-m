@@ -34,9 +34,60 @@ func TestAddFromGateway(t *testing.T) {
 
 	engine.Run()
 
-	gateway.Add(&Bottle{})
+	query := AddBottleQuery{
+		bottle: &Bottle{},
+	}
+
+	gateway.run(query)
 
 	engine.Stop()
+}
+
+func TestGetFromMakenChan(t *testing.T) {
+	cfg := NewTestConfig()
+	engine := New(cfg)
+
+	messageStorage := createTestMessageStorageWithMessages(make([]*string, 0))
+	tokens := [1]*Token{
+		&Token{
+			Str: "test_token",
+		},
+	}
+	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
+
+	bottleAddHandlerFunc := BottleAddHandler(tokenStorage, messageStorage)
+	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
+
+	engine.SetBottleGetHandler(bottleGetHandlerFunc)
+	engine.SetBottleAddHandler(bottleAddHandlerFunc)
+
+	gateway := engine.Gateway
+	engine.Run()
+	defer engine.Stop()
+
+	addQuery := AddBottleQuery{
+		&Bottle{
+			Message: &Message{
+				Text: "test_text",
+			},
+			Token: &Message{
+				Text: "test_token",
+			},
+		},
+	}
+
+	gateway.run(addQuery)
+
+	outCh := make(chan *Bottle)
+	reqQuery := RequestBottleQuery{
+		outCh: outCh,
+	}
+
+	gateway.run(reqQuery)
+
+	bottle := <-outCh
+
+	assert.Equal(t, bottle.Message.Text, "test_text")
 }
 
 func TestGenerateEmptyBottle(t *testing.T) {
