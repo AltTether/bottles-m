@@ -28,7 +28,7 @@ func TestGetMessageFromEmptyStorage(t *testing.T) {
 	storage := NewMessageStorage()
 
 	message, err := storage.Get()
-	assert.Equal(t, err, fmt.Errorf("No Messages"))
+	assert.EqualError(t, err, fmt.Errorf("No Messages"))
 	assert.Nil(t, message)
 }
 
@@ -133,7 +133,7 @@ func TestTokenStorageInvalidToken(t *testing.T) {
 	}
 
 	err := storage.Use(token)
-	assert.Equal(t, fmt.Errorf("Token is Invalid"), err)
+	assert.EqualError(t, err, fmt.Errorf("Token is Invalid"))
 }
 
 func TestTokenStorageSameToken(t *testing.T) {
@@ -151,7 +151,7 @@ func TestTokenStorageSameToken(t *testing.T) {
 
 	_ = storage.Add(token1)
 	err := storage.Add(token2)
-	assert.Equal(t, err, fmt.Errorf("Storage has Same Token"))
+	assert.EqualError(t, err, fmt.Errorf("Storage has Same Token"))
 }
 
 func TestTokenStorageTokenExpiration(t *testing.T) {
@@ -167,7 +167,7 @@ func TestTokenStorageTokenExpiration(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	err := storage.Use(token)
 
-	assert.Equal(t, fmt.Errorf("Token is Invalid"), err)
+	assert.EqualError(t, err, fmt.Errorf("Token is Invalid"))
 }
 
 func TestTokenStorageAddNilToken(t *testing.T) {
@@ -178,5 +178,5 @@ func TestTokenStorageAddNilToken(t *testing.T) {
 
 	err := storage.Add(token)
 
-	assert.Equal(t, fmt.Errorf("Token is Empty"), err)
+	assert.EqualError(t, err, fmt.Errorf("Token is Empty"))
 }
