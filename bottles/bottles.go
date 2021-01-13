@@ -32,15 +32,26 @@ type Engine struct {
 type HandlerFunc func(ctx context.Context, bottle *Bottle)
 
 type Gateway struct {
-	In  chan *Bottle
-	Out chan *Bottle
+	In  chan *Query
+}
+
+type Query struct {
+	Mode string
+	Data interface{}
+}
+
+type AddBottleQuery struct {
+	Bottle *Bottle
+}
+
+type RequestBottleQuery struct {
+	OutCh chan *Bottle
 }
 
 func New(cfg *Config) *Engine {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	gateway := &Gateway{
-		In:  make(chan *Bottle),
-		Out: make(chan *Bottle),
+		In:  make(chan *Query),
 	}
 
 	return &Engine{
@@ -58,8 +69,7 @@ func DefaultEngine() *Engine{
 	cfg := NewConfig()
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	gateway := &Gateway{
-		In:  make(chan *Bottle),
-		Out: make(chan *Bottle),
+		In:  make(chan *Query),
 	}
 
 	messageStorage := NewMessageStorage()
@@ -93,13 +103,40 @@ func (e *Engine) SetBottleGenerateHandler(h HandlerFunc) {
 }
 
 func (e *Engine) Run() {
+	addHandlerCh := make(chan interface{})
+	getHandlerCh := make(chan interface{})
+
+	go func() {
+	Loop:
+		for {
+			select {
+			case <- e.Ctx.Done():
+				break Loop
+			case q := <- e.Gateway.In:
+				if (q.Mode == "add_bottle") {
+					addHandlerCh <- q.Data
+				}
+
+				if (q.Mode == "request_bottle") {
+					getHandlerCh <- q.Data
+				}
+			default:
+				break
+			}
+		}
+	}()
+
 	go func() {
 	Loop:
 		for {
 			select {
 			case <-e.Ctx.Done():
 				break Loop
-			case b := <-e.Gateway.In:
+			case data := <- addHandlerCh:
+				b, ok := data.(*Bottle)
+				if (!ok) {
+					break
+				}
 				e.BottleAddHandler(e.Ctx, b)
 			default:
 				break
@@ -114,14 +151,23 @@ func (e *Engine) Run() {
 			select {
 			case <-e.Ctx.Done():
 				break Loop
-			default:
-				b := &Bottle{}
-				e.BottleGetHandler(e.Ctx, b)
-				if b.Token == nil || b.Message == nil {
+			case data := <- getHandlerCh:
+				ch, ok := data.(chan *Bottle)
+				if (!ok) {
 					break
-				} else {
-					e.Gateway.Out <- b
 				}
+				for {
+					b := &Bottle{}
+					e.BottleGetHandler(e.Ctx, b)
+					if b.Token == nil || b.Message == nil {
+						continue
+					} else {
+						ch <- b
+						break
+					}
+				}
+			default:
+				break
 			}
 		}
 		return
@@ -154,12 +200,8 @@ func (e *Engine) Stop() {
 	e.cancelFunc()
 }
 
-func (g *Gateway) Add(b *Bottle) {
-	g.In <- b
-}
-
-func (g *Gateway) Get() <-chan *Bottle {
-	return g.Out
+func (g *Gateway) Run(q *Query) {
+	g.In <- q
 }
 
 func BottleAddHandler(tokenStorage *TokenStorage, messageStorage *MessageStorage) HandlerFunc {
