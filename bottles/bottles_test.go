@@ -1,6 +1,7 @@
 package bottles
 
 import (
+	"fmt"
 	"time"
 	"testing"
 	"context"
@@ -140,43 +141,6 @@ Loop:
 	assert.Greater(t, cnt, 0)
 }
 
-func TestDefaultEngine(t *testing.T) {
-	engine := DefaultEngine()
-
-	cfg := NewTestConfig()
-	engine.SetConfig(cfg)
-	gateway := engine.Gateway
-
-	engine.Run()
-	defer engine.Stop()
-
-	n := 10
-	tokenStrs := make([]string, n)
-	for i := 0; i < n; i++ {
-		bottle := <-gateway.Get()
-		tokenStrs[i] = bottle.Token.Str
-	}
-
-	for i := 0; i < n; i++ {
-		tokenStr := tokenStrs[i]
-		token := &Token{
-			Str: tokenStr,
-		}
-
-		messageText := ""
-		message := &Message{
-			Text: messageText,
-		}
-
-		b := &Bottle{
-			Message: message,
-			Token:   token,
-		}
-
-		gateway.Add(b)
-	}
-}
-
 func CreateTestEngine() *Engine {
 	n := 10
 
@@ -217,7 +181,7 @@ func createTestTokenStorageWithTokens(ts []*Token, expiration time.Duration) *To
 func createTestMessages(n int) []*Message {
 	ms := make([]*Message, n)
 	for i := 0; i < n; i++ {
-		text := testMessageText
+		text := "test"
 		ms[i] = &Message{
 			Text: text,
 		}
@@ -229,7 +193,7 @@ func createTestMessages(n int) []*Message {
 func createTestTokens(n int) []*Token {
 	ts := make([]*Token, n)
 	for i := 0; i < n; i++ {
-		str := testTokenStrFormatter(i)
+		str := fmt.Sprintf("test%d", i)
 		ts[i] = &Token{
 			Str: str,
 		}
