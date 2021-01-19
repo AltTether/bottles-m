@@ -35,12 +35,8 @@ func TestAddFromGateway(t *testing.T) {
 
 	engine.Run()
 
-	query := &Query{
-		Mode: "add_bottle",
-		Data: &Bottle{},
-	}
-
-	gateway.Run(query)
+	bottle := &Bottle{}
+	gateway.AddBottle(bottle)
 
 	engine.Stop()
 }
@@ -64,31 +60,22 @@ func TestGetFromMakenChan(t *testing.T) {
 	engine.Run()
 	defer engine.Stop()
 
-	addQuery := &Query{
-		Mode: "add_bottle",
-		Data: &Bottle{
-			Message: &Message{
-				Text: "test_text",
-			},
-			Token: &Token{
-				Str: "test_token",
-			},
+	addedBottle := &Bottle{
+		Message: &Message{
+			Text: "test_text",
+		},
+		Token: &Token{
+			Str: "test_token",
 		},
 	}
+	gateway.AddBottle(addedBottle)
 
-	gateway.Run(addQuery)
+	bottleOutCh := make(chan *Bottle)
+	gateway.RequestBottle(bottleOutCh)
 
-	outCh := make(chan *Bottle)
-	reqQuery := &Query{
-		Mode: "request_bottle",
-		Data: outCh,
-	}
+	gotenBottle := <-bottleOutCh
 
-	gateway.Run(reqQuery)
-
-	bottle := <-outCh
-
-	assert.Equal(t, bottle.Message.Text, "test_text")
+	assert.Equal(t, gotenBottle.Message.Text, "test_text")
 }
 
 func TestGenerateEmptyBottle(t *testing.T) {
@@ -111,26 +98,14 @@ func TestGenerateEmptyBottle(t *testing.T) {
 	cnt := 0
 	timeout := time.After(100 * time.Millisecond)
 
-
-	outCh := make(chan *Bottle)
-	query := &Query{
-		Mode: "request_bottle",
-		Data: outCh,
-	}
-
-	gateway.Run(query)
+	bottleOutCh := make(chan *Bottle)
+	gateway.RequestBottle(bottleOutCh)
 Loop:
 	for {
 		select {
-		case <-outCh:
+		case <-bottleOutCh:
 			cnt++
-			outCh = make(chan *Bottle)
-			query := &Query{
-				Mode: "request_bottle",
-				Data: outCh,
-			}
-
-			gateway.Run(query)
+			gateway.RequestBottle(bottleOutCh)
 		case <-timeout:
 			break Loop
 		default:

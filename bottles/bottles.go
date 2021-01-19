@@ -200,7 +200,19 @@ func (e *Engine) Stop() {
 	e.cancelFunc()
 }
 
-func (g *Gateway) Run(q *Query) {
+func (g *Gateway) AddBottle(bottle *Bottle) {
+	q := &Query{
+		Mode: "add_bottle",
+		Data: bottle,
+	}
+	g.In <- q
+}
+
+func (g *Gateway) RequestBottle(ch chan *Bottle) {
+	q := &Query{
+		Mode: "request_bottle",
+		Data: ch,
+	}
 	g.In <- q
 }
 

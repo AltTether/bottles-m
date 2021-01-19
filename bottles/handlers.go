@@ -19,12 +19,8 @@ func GetBottleHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithCancel(context.Background())
 
-		OutCh := make(chan *Bottle)
-		query := &Query{
-			Mode:  "request_bottle",
-			Data: OutCh,
-		}
-		gateway.Run(query)
+		bottleOutCh := make(chan *Bottle)
+		gateway.RequestBottle(bottleOutCh)
 
 		go func() {
 			for {
@@ -32,7 +28,7 @@ func GetBottleHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
 				case <-ctx.Done():
 					c.Status(http.StatusBadRequest)
 					return
-				case bottle := <-OutCh:
+				case bottle := <-bottleOutCh:
 					c.JSON(http.StatusOK, gin.H{
 						"message": gin.H{
 							"text": bottle.Message.Text,
@@ -57,18 +53,14 @@ func GetBottleStreamHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
 	sendDelay := time.Duration(cfg.SendBottleDelay)
 	return func(c *gin.Context) {
 		clientGone := c.Writer.CloseNotify()
-		OutCh := make(chan *Bottle)
-		query := &Query{
-			Mode:  "request_bottle",
-			Data: OutCh,
-		}
-		gateway.Run(query)
+		bottleOutCh := make(chan *Bottle)
+		gateway.RequestBottle(bottleOutCh)
 
 		c.Stream(func(w io.Writer) bool {
 			select {
 			case <-clientGone:
 				return false
-			case bottle := <-OutCh:
+			case bottle := <-bottleOutCh:
 				time.Sleep(sendDelay)
 				c.SSEvent("bottle", gin.H{
 					"message": gin.H{
@@ -79,11 +71,7 @@ func GetBottleStreamHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
 					},
 				})
 
-				query := &Query{
-					Mode: "request_bottle",
-					Data: OutCh,
-				}
-				gateway.Run(query)
+				gateway.RequestBottle(bottleOutCh)
 
 				return true
 			default:
@@ -110,11 +98,7 @@ func PostBottleHandlerFunc(gateway *Gateway) gin.HandlerFunc {
 			},
 		}
 
-		query := &Query{
-			Mode: "add_bottle",
-			Data: bottle,
-		}
-		gateway.Run(query)
+		gateway.AddBottle(bottle)
 
 		c.Status(http.StatusOK)
 	}
