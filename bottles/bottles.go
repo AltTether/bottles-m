@@ -5,6 +5,10 @@ import (
 	"context"
 )
 
+const (
+	ADD_BOTTLE_MODE = "add_bottle"
+	REQUEST_BOTTLE_MODE = "request_bottle"
+)
 
 type Message struct {
 	Text string
@@ -113,11 +117,11 @@ func (e *Engine) Run() {
 			case <- e.Ctx.Done():
 				break Loop
 			case q := <- e.Gateway.In:
-				if (q.Mode == "add_bottle") {
+				if (q.Mode == ADD_BOTTLE_MODE) {
 					addHandlerCh <- q.Data
 				}
 
-				if (q.Mode == "request_bottle") {
+				if (q.Mode == REQUEST_BOTTLE_MODE) {
 					getHandlerCh <- q.Data
 				}
 			default:
@@ -202,7 +206,7 @@ func (e *Engine) Stop() {
 
 func (g *Gateway) AddBottle(bottle *Bottle) {
 	q := &Query{
-		Mode: "add_bottle",
+		Mode: ADD_BOTTLE_MODE,
 		Data: bottle,
 	}
 	g.In <- q
@@ -210,7 +214,7 @@ func (g *Gateway) AddBottle(bottle *Bottle) {
 
 func (g *Gateway) RequestBottle(ch chan *Bottle) {
 	q := &Query{
-		Mode: "request_bottle",
+		Mode: REQUEST_BOTTLE_MODE,
 		Data: ch,
 	}
 	g.In <- q
