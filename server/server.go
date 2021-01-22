@@ -1,11 +1,13 @@
-package bottles
+package server
 
 import(
 	"github.com/gin-gonic/gin"
+	
+	"github.com/bottles/bottles"
 )
 
 
-func NewServer(gateway *Gateway, cfg *Config) *gin.Engine {
+func NewServer(gateway *bottles.Gateway, cfg *bottles.Config) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
@@ -14,7 +16,7 @@ func NewServer(gateway *Gateway, cfg *Config) *gin.Engine {
 	return r
 }
 
-func registerRoute(r *gin.Engine, gateway *Gateway, cfg *Config) {
+func registerRoute(r *gin.Engine, gateway *bottles.Gateway, cfg *bottles.Config) {
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/bottle", GetBottleHandlerFunc(gateway, cfg))
@@ -24,7 +26,7 @@ func registerRoute(r *gin.Engine, gateway *Gateway, cfg *Config) {
 }
 
 func Run() {
-	e := DefaultEngine()
+	e := bottles.DefaultEngine()
 	g := e.Gateway
 	c := e.Config
 	

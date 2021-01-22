@@ -1,4 +1,4 @@
-package bottles;
+package server;
 
 import (
 	"io"
@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/bottles/bottles"
 )
 
 
@@ -15,11 +17,11 @@ type RequestBody struct {
 	Token   *string `json:"token" binding:"required"`
 }
 
-func GetBottleHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
+func GetBottleHandlerFunc(gateway *bottles.Gateway, cfg *bottles.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithCancel(context.Background())
 
-		bottleOutCh := make(chan *Bottle)
+		bottleOutCh := make(chan *bottles.Bottle)
 		gateway.RequestBottle(bottleOutCh)
 
 		go func() {
@@ -49,11 +51,11 @@ func GetBottleHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
 	}
 }
 
-func GetBottleStreamHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
+func GetBottleStreamHandlerFunc(gateway *bottles.Gateway, cfg *bottles.Config) gin.HandlerFunc {
 	sendDelay := time.Duration(cfg.SendBottleDelay)
 	return func(c *gin.Context) {
 		clientGone := c.Writer.CloseNotify()
-		bottleOutCh := make(chan *Bottle)
+		bottleOutCh := make(chan *bottles.Bottle)
 		gateway.RequestBottle(bottleOutCh)
 
 		c.Stream(func(w io.Writer) bool {
@@ -81,7 +83,7 @@ func GetBottleStreamHandlerFunc(gateway *Gateway, cfg *Config) gin.HandlerFunc {
 	}
 }
 
-func PostBottleHandlerFunc(gateway *Gateway) gin.HandlerFunc {
+func PostBottleHandlerFunc(gateway *bottles.Gateway) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body RequestBody
 		if c.BindJSON(&body) != nil {
@@ -89,11 +91,11 @@ func PostBottleHandlerFunc(gateway *Gateway) gin.HandlerFunc {
 			return
 		}
 
-		bottle := &Bottle{
-			Message: &Message{
+		bottle := &bottles.Bottle{
+			Message: &bottles.Message{
 				Text: *body.Message,
 			},
-			Token:   &Token{
+			Token:   &bottles.Token{
 				Str: *body.Token,
 			},
 		}

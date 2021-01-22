@@ -1,4 +1,4 @@
-package bottles
+package server
 
 import (
 	"fmt"
@@ -12,6 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bottles/bottles"
 )
 
 var (
@@ -28,7 +30,7 @@ func init() {
 
 func TestGetBottleRouteEmpty(t *testing.T) {
 	cfg := NewTestConfig()
-	engine := New(cfg)
+	engine := bottles.New(cfg)
 	r := NewServer(engine.Gateway, cfg)
 
 	engine.Run()
@@ -124,4 +126,75 @@ func CreateTestResponseRecorder() *TestResponseRecorder {
 		httptest.NewRecorder(),
 		make(chan bool, 1),
 	}
+}
+
+func NewTestConfig() *bottles.Config {
+	return &bottles.Config{
+		Seed:                   42,
+		TokenSize:              10,
+		TokenExpiration:        time.Duration(10 * time.Millisecond),
+		SendBottleDelay:        time.Duration(15 * time.Millisecond),
+		GenerateBottleCoolTime: time.Duration(10 * time.Millisecond),
+	}
+}
+
+func CreateTestEngine() *bottles.Engine {
+	n := 10
+
+	return CreateTestEngineWithData(createTestMessages(n), createTestTokens(n))
+}
+
+func CreateTestEngineWithData(messages []*bottles.Message, tokens []*bottles.Token) *bottles.Engine {
+	cfg := NewTestConfig()
+	engine := bottles.New(cfg)
+
+	messageStorage := createTestMessageStorageWithMessages(messages)
+	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
+
+	engine.SetBottleGetHandler(bottles.BottleGetHandler(tokenStorage, messageStorage))
+	engine.SetBottleAddHandler(bottles.BottleAddHandler(tokenStorage, messageStorage))
+
+	return engine
+}
+
+func createTestMessageStorageWithMessages(ms []*bottles.Message) *bottles.MessageStorage{
+	s := bottles.NewMessageStorage()
+	for _, m := range ms {
+		_ = s.Add(m)
+	}
+
+	return s
+}
+
+func createTestTokenStorageWithTokens(ts []*bottles.Token, expiration time.Duration) *bottles.TokenStorage {
+	s := bottles.NewTokenStorage(expiration)
+	for _, t := range ts {
+		_ = s.Add(t)
+	}
+
+	return s
+}
+
+func createTestMessages(n int) []*bottles.Message {
+	ms := make([]*bottles.Message, n)
+	for i := 0; i < n; i++ {
+		text := "test"
+		ms[i] = &bottles.Message{
+			Text: text,
+		}
+	}
+
+	return ms
+}
+
+func createTestTokens(n int) []*bottles.Token {
+	ts := make([]*bottles.Token, n)
+	for i := 0; i < n; i++ {
+		str := fmt.Sprintf("test%d", i)
+		ts[i] = &bottles.Token{
+			Str: str,
+		}
+	}
+
+	return ts
 }
