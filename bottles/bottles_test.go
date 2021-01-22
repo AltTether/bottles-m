@@ -1,6 +1,7 @@
 package bottles
 
 import (
+	"fmt"
 	"time"
 	"testing"
 	"context"
@@ -34,9 +35,47 @@ func TestAddFromGateway(t *testing.T) {
 
 	engine.Run()
 
-	gateway.Add(&Bottle{})
+	bottle := &Bottle{}
+	gateway.AddBottle(bottle)
 
 	engine.Stop()
+}
+
+func TestGetFromMakenChan(t *testing.T) {
+	cfg := NewTestConfig()
+	engine := New(cfg)
+
+	messageStorage := createTestMessageStorageWithMessages(make([]*Message, 0))
+	tokens := make([]*Token, 1)
+	tokens[0] = &Token{ Str: "test_token" }
+	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
+
+	bottleAddHandlerFunc := BottleAddHandler(tokenStorage, messageStorage)
+	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
+
+	engine.SetBottleGetHandler(bottleGetHandlerFunc)
+	engine.SetBottleAddHandler(bottleAddHandlerFunc)
+
+	gateway := engine.Gateway
+	engine.Run()
+	defer engine.Stop()
+
+	addedBottle := &Bottle{
+		Message: &Message{
+			Text: "test_text",
+		},
+		Token: &Token{
+			Str: "test_token",
+		},
+	}
+	gateway.AddBottle(addedBottle)
+
+	bottleOutCh := make(chan *Bottle)
+	gateway.RequestBottle(bottleOutCh)
+
+	gotenBottle := <-bottleOutCh
+
+	assert.Equal(t, gotenBottle.Message.Text, "test_text")
 }
 
 func TestGenerateEmptyBottle(t *testing.T) {
@@ -58,11 +97,15 @@ func TestGenerateEmptyBottle(t *testing.T) {
 
 	cnt := 0
 	timeout := time.After(100 * time.Millisecond)
+
+	bottleOutCh := make(chan *Bottle)
+	gateway.RequestBottle(bottleOutCh)
 Loop:
 	for {
 		select {
-		case <-gateway.Get():
+		case <-bottleOutCh:
 			cnt++
+			gateway.RequestBottle(bottleOutCh)
 		case <-timeout:
 			break Loop
 		default:
@@ -71,43 +114,6 @@ Loop:
 	}
 
 	assert.Greater(t, cnt, 0)
-}
-
-func TestDefaultEngine(t *testing.T) {
-	engine := DefaultEngine()
-
-	cfg := NewTestConfig()
-	engine.SetConfig(cfg)
-	gateway := engine.Gateway
-
-	engine.Run()
-	defer engine.Stop()
-
-	n := 10
-	tokenStrs := make([]string, n)
-	for i := 0; i < n; i++ {
-		bottle := <-gateway.Get()
-		tokenStrs[i] = bottle.Token.Str
-	}
-
-	for i := 0; i < n; i++ {
-		tokenStr := tokenStrs[i]
-		token := &Token{
-			Str: tokenStr,
-		}
-
-		messageText := ""
-		message := &Message{
-			Text: messageText,
-		}
-
-		b := &Bottle{
-			Message: message,
-			Token:   token,
-		}
-
-		gateway.Add(b)
-	}
 }
 
 func CreateTestEngine() *Engine {
@@ -150,7 +156,7 @@ func createTestTokenStorageWithTokens(ts []*Token, expiration time.Duration) *To
 func createTestMessages(n int) []*Message {
 	ms := make([]*Message, n)
 	for i := 0; i < n; i++ {
-		text := testMessageText
+		text := "test"
 		ms[i] = &Message{
 			Text: text,
 		}
@@ -162,7 +168,7 @@ func createTestMessages(n int) []*Message {
 func createTestTokens(n int) []*Token {
 	ts := make([]*Token, n)
 	for i := 0; i < n; i++ {
-		str := testTokenStrFormatter(i)
+		str := fmt.Sprintf("test%d", i)
 		ts[i] = &Token{
 			Str: str,
 		}
