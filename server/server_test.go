@@ -31,13 +31,17 @@ func init() {
 func TestGetBottleRouteEmpty(t *testing.T) {
 	cfg := NewTestConfig()
 	engine := bottles.New(cfg)
-	r := NewServer(engine.Gateway, cfg)
+	r := NewServer(engine.Gateway)
 
 	engine.Run()
 	defer engine.Stop()
 
-	w := httptest.NewRecorder()
+	w := CreateTestResponseRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle", nil)
+	go func () {
+		time.Sleep(100 * time.Millisecond)
+		w.closeClient()
+	}()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -46,8 +50,7 @@ func TestGetBottleRouteEmpty(t *testing.T) {
 
 func TestGetBottleStreamRoute(t *testing.T) {
 	engine := CreateTestEngine()
-	cfg := engine.Config
-	r := NewServer(engine.Gateway, cfg)
+	r := NewServer(engine.Gateway)
 
 	engine.Run()
 	defer engine.Stop()
@@ -55,20 +58,19 @@ func TestGetBottleStreamRoute(t *testing.T) {
 	w := CreateTestResponseRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle/stream", nil)
 	go func () {
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 		w.closeClient()
 	}()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Greater(t,
 		strings.Count(w.Body.String(), "{\"text\":\"test\"}"), 1)
 }
 
 func TestPostBottleRoute(t *testing.T) {
 	engine := CreateTestEngine()
-	cfg := engine.Config
-	r := NewServer(engine.Gateway, cfg)
+	r := NewServer(engine.Gateway)
 
 	engine.Run()
 	defer engine.Stop()
@@ -88,23 +90,26 @@ func TestPostBottleRoute(t *testing.T) {
 		bytes.NewBuffer(body))
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "", w.Body.String())
 }
 
 func TestGetBottleRoute(t *testing.T) {
 	engine := CreateTestEngine()
-	cfg := engine.Config
-	r := NewServer(engine.Gateway, cfg)
+	r := NewServer(engine.Gateway)
 
 	engine.Run()
 	defer engine.Stop()
 
-	w := httptest.NewRecorder()
+	w := CreateTestResponseRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/bottle", nil)
+	go func () {
+		time.Sleep(100 * time.Millisecond)
+		w.closeClient()
+	}()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "\"message\":{\"text\":\"test\"}")
 }
 
@@ -134,7 +139,7 @@ func NewTestConfig() *bottles.Config {
 		TokenSize:              10,
 		TokenExpiration:        time.Duration(10 * time.Millisecond),
 		SendBottleDelay:        time.Duration(15 * time.Millisecond),
-		GenerateBottleCoolTime: time.Duration(10 * time.Millisecond),
+		GenerateBottleCoolTime: time.Duration(20 * time.Millisecond),
 	}
 }
 

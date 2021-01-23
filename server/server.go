@@ -7,32 +7,31 @@ import(
 )
 
 
-func NewServer(gateway *bottles.Gateway, cfg *bottles.Config) *gin.Engine {
+func NewServer(gateway *bottles.Gateway) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
-	registerRoute(r, gateway, cfg)
+	registerRoute(r, gateway)
 
 	return r
 }
 
-func registerRoute(r *gin.Engine, gateway *bottles.Gateway, cfg *bottles.Config) {
+func registerRoute(r *gin.Engine, gateway *bottles.Gateway) {
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/bottle", GetBottleHandlerFunc(gateway, cfg))
+		v1.GET("/bottle", GetBottleHandlerFunc(gateway))
 		v1.POST("/bottle", PostBottleHandlerFunc(gateway))
-		v1.GET("/bottle/stream", GetBottleStreamHandlerFunc(gateway, cfg))
+		v1.GET("/bottle/stream", GetBottleStreamHandlerFunc(gateway))
 	}
 }
 
 func Run() {
 	e := bottles.DefaultEngine()
 	g := e.Gateway
-	c := e.Config
 	
 	e.Run()
 	defer e.Stop()
 
-	s := NewServer(g, c)
+	s := NewServer(g)
 	s.Run()
 }
