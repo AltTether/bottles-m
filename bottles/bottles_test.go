@@ -16,8 +16,8 @@ func TestSetHandlersToEngine(t *testing.T) {
 	bottleAddHandlerFunc := func(ctx context.Context, b *Bottle) {}
 	bottleGetHandlerFunc := func(ctx context.Context, b *Bottle) {}
 
-	engine.SetBottleAddHandler(bottleAddHandlerFunc)
-	engine.SetBottleGetHandler(bottleGetHandlerFunc)
+	engine.AddHandler(ADD_BOTTLE_MODE, bottleAddHandlerFunc)
+	engine.AddHandler(REQUEST_BOTTLE_MODE, bottleGetHandlerFunc)
 }
 
 func TestRunEngineWithNoHandler(t *testing.T) {
@@ -53,8 +53,8 @@ func TestGetFromMakenChan(t *testing.T) {
 	bottleAddHandlerFunc := BottleAddHandler(tokenStorage, messageStorage)
 	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
 
-	engine.SetBottleGetHandler(bottleGetHandlerFunc)
-	engine.SetBottleAddHandler(bottleAddHandlerFunc)
+	engine.AddHandler(REQUEST_BOTTLE_MODE, bottleGetHandlerFunc)
+	engine.AddHandler(ADD_BOTTLE_MODE, bottleAddHandlerFunc)
 
 	gateway := engine.Gateway
 	engine.Run()
@@ -88,8 +88,8 @@ func TestGenerateEmptyBottle(t *testing.T) {
 	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
 	bottleGenerateHandlerFunc := BottleGenerateHandler(messageStorage)
 
-	engine.SetBottleGetHandler(bottleGetHandlerFunc)
-	engine.SetBottleGenerateHandler(bottleGenerateHandlerFunc)
+	engine.AddHandler(REQUEST_BOTTLE_MODE, bottleGetHandlerFunc)
+	engine.AddHandler(GENERATE_BOTTLE_MODE, bottleGenerateHandlerFunc)
 
 	gateway := engine.Gateway
 	engine.Run()
@@ -129,7 +129,7 @@ func TestBottleGetDeley(t *testing.T) {
 	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
 
 	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
-	engine.SetBottleGetHandler(bottleGetHandlerFunc)
+	engine.AddHandler(REQUEST_BOTTLE_MODE, bottleGetHandlerFunc)
 
 	gateway := engine.Gateway
 
@@ -160,8 +160,8 @@ func CreateTestEngineWithData(messages []*Message, tokens []*Token) *Engine {
 	messageStorage := createTestMessageStorageWithMessages(messages)
 	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
 
-	engine.SetBottleGetHandler(BottleGetHandler(tokenStorage, messageStorage))
-	engine.SetBottleAddHandler(BottleAddHandler(tokenStorage, messageStorage))
+	engine.AddHandler(REQUEST_BOTTLE_MODE, BottleGetHandler(tokenStorage, messageStorage))
+	engine.AddHandler(ADD_BOTTLE_MODE, BottleAddHandler(tokenStorage, messageStorage))
 
 	return engine
 }

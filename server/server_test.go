@@ -156,8 +156,8 @@ func CreateTestEngineWithData(messages []*bottles.Message, tokens []*bottles.Tok
 	messageStorage := createTestMessageStorageWithMessages(messages)
 	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
 
-	engine.SetBottleGetHandler(bottles.BottleGetHandler(tokenStorage, messageStorage))
-	engine.SetBottleAddHandler(bottles.BottleAddHandler(tokenStorage, messageStorage))
+	engine.AddHandler(bottles.REQUEST_BOTTLE_MODE, bottles.BottleGetHandler(tokenStorage, messageStorage))
+	engine.AddHandler(bottles.ADD_BOTTLE_MODE, bottles.BottleAddHandler(tokenStorage, messageStorage))
 
 	return engine
 }

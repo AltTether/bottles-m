@@ -8,6 +8,7 @@ import (
 const (
 	ADD_BOTTLE_MODE = "add_bottle"
 	REQUEST_BOTTLE_MODE = "request_bottle"
+	GENERATE_BOTTLE_MODE = "generate_bottle"
 )
 
 type Message struct {
@@ -24,13 +25,11 @@ type Bottle struct {
 }
 
 type Engine struct {
-	Ctx                   context.Context
-	cancelFunc            context.CancelFunc
-	Config                *Config
-	Gateway               *Gateway
-	BottleAddHandler      HandlerFunc
-	BottleGetHandler      HandlerFunc
-	BottleGenerateHandler HandlerFunc
+	Ctx        context.Context
+	cancelFunc context.CancelFunc
+	Config     *Config
+	Gateway    *Gateway
+	Handlers   map[string]HandlerFunc
 }
 
 type HandlerFunc func(ctx context.Context, bottle *Bottle)
@@ -58,14 +57,17 @@ func New(cfg *Config) *Engine {
 		In:  make(chan *Query),
 	}
 
+	handlers := make(map[string]HandlerFunc)
+	handlers[ADD_BOTTLE_MODE] = func(ctx context.Context, b *Bottle) {}
+	handlers[REQUEST_BOTTLE_MODE] = func(ctx context.Context, b *Bottle) {}
+	handlers[GENERATE_BOTTLE_MODE] = func(ctx context.Context, b *Bottle) {}
+
 	return &Engine{
-		Ctx:              ctx,
-		cancelFunc:       cancelFunc,
-		Config:           cfg,
-		Gateway:          gateway,
-		BottleAddHandler: func(ctx context.Context, b *Bottle) {},
-		BottleGetHandler: func(ctx context.Context, b *Bottle) {},
-		BottleGenerateHandler: func(ctx context.Context, b *Bottle) {},
+		Ctx:        ctx,
+		cancelFunc: cancelFunc,
+		Config:     cfg,
+		Gateway:    gateway,
+		Handlers:   handlers,
 	}
 }
 
@@ -79,14 +81,17 @@ func DefaultEngine() *Engine{
 	messageStorage := NewMessageStorage()
 	tokenStorage := NewTokenStorage(cfg.TokenExpiration)
 
+	handlers := make(map[string]HandlerFunc)
+	handlers[ADD_BOTTLE_MODE] = BottleAddHandler(tokenStorage, messageStorage)
+	handlers[REQUEST_BOTTLE_MODE] = BottleGetHandler(tokenStorage, messageStorage)
+	handlers[GENERATE_BOTTLE_MODE] = BottleGenerateHandler(messageStorage)
+
 	return &Engine{
-		Ctx:                   ctx,
-		cancelFunc:            cancelFunc,
-		Config:                cfg,
-		Gateway:               gateway,
-		BottleAddHandler:      BottleAddHandler(tokenStorage, messageStorage),
-		BottleGetHandler:      BottleGetHandler(tokenStorage, messageStorage),
-		BottleGenerateHandler: BottleGenerateHandler(messageStorage),
+		Ctx:        ctx,
+		cancelFunc: cancelFunc,
+		Config:     cfg,
+		Gateway:    gateway,
+		Handlers:   handlers,
 	}
 }
 
@@ -94,16 +99,8 @@ func (e *Engine) SetConfig(c *Config) {
 	e.Config = c
 }
 
-func (e *Engine) SetBottleAddHandler(h HandlerFunc) {
-	e.BottleAddHandler = h
-}
-
-func (e *Engine) SetBottleGetHandler(h HandlerFunc) {
-	e.BottleGetHandler = h
-}
-
-func (e *Engine) SetBottleGenerateHandler(h HandlerFunc) {
-	e.BottleGenerateHandler = h
+func (e *Engine) AddHandler(mode string, h HandlerFunc) {
+	e.Handlers[mode] = h
 }
 
 func (e *Engine) Run() {
@@ -141,7 +138,7 @@ func (e *Engine) Run() {
 				if (!ok) {
 					break
 				}
-				e.BottleAddHandler(e.Ctx, b)
+				e.Handlers[ADD_BOTTLE_MODE](e.Ctx, b)
 			default:
 				break
 			}
@@ -162,7 +159,7 @@ func (e *Engine) Run() {
 				}
 				for {
 					b := &Bottle{}
-					e.BottleGetHandler(e.Ctx, b)
+					e.Handlers[REQUEST_BOTTLE_MODE](e.Ctx, b)
 					if b.Token == nil || b.Message == nil {
 						continue
 					} else {
@@ -192,7 +189,7 @@ func (e *Engine) Run() {
 						Text: text,
 					},
 				}
-				e.BottleGenerateHandler(e.Ctx, b)
+				e.Handlers[GENERATE_BOTTLE_MODE](e.Ctx, b)
 			default:
 				break
 			}
