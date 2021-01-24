@@ -116,6 +116,37 @@ Loop:
 	assert.Greater(t, cnt, 0)
 }
 
+func TestBottleGetDeley(t *testing.T) {
+	cfg := NewTestConfig()
+	engine := New(cfg)
+
+	messages := make([]*Message, 1)
+	messages[0] = &Message{ Text: "test_text" }
+	messageStorage := createTestMessageStorageWithMessages(messages)
+
+	tokens := make([]*Token, 1)
+	tokens[0] = &Token{ Str: "test_token" }
+	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
+
+	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
+	engine.SetBottleGetHandler(bottleGetHandlerFunc)
+
+	gateway := engine.Gateway
+
+	engine.Run()
+	defer engine.Stop()
+
+	bottleOutCh := make(chan *Bottle)
+	gateway.RequestBottle(bottleOutCh)
+
+	start := time.Now()
+	_ = <-bottleOutCh
+	end := time.Now()
+	elapsed := end.Sub(start)
+
+	assert.GreaterOrEqual(t, elapsed.Milliseconds(), cfg.SendBottleDelay.Milliseconds())
+}
+
 func CreateTestEngine() *Engine {
 	n := 10
 

@@ -166,7 +166,7 @@ func (e *Engine) Run() {
 					if b.Token == nil || b.Message == nil {
 						continue
 					} else {
-						ch <- b
+						go waitSend(ch, b, e.Config.SendBottleDelay)
 						break
 					}
 				}
@@ -198,6 +198,11 @@ func (e *Engine) Run() {
 			}
 		}
 	}()
+}
+
+func waitSend(ch chan *Bottle, bottle *Bottle, delay time.Duration) {
+	time.Sleep(delay)
+	ch <- bottle
 }
 
 func (e *Engine) Stop() {
