@@ -20,175 +20,17 @@ type Bottle struct {
 }
 
 type Engine struct {
-	Ctx        context.Context
-	cancelFunc context.CancelFunc
-	Config     *Config
-	Gateway    *Gateway
-	Handlers   map[string]HandlerFunc
+	config      *Config
+	storage     *Storage
+	subscribers map[chan *Bottle]struct{}
 }
 
-type HandlerFunc func(ctx context.Context, bottle *Bottle)
-
-type Gateway struct {
-	In  chan *Query
-}
-
-type Query struct {
-	Mode string
-	Data interface{}
-}
-
-type AddBottleQuery struct {
-	Bottle *Bottle
-}
-
-type RequestBottleQuery struct {
-	OutCh chan *Bottle
-}
-
-func New(cfg *Config) *Engine {
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	gateway := &Gateway{
-		In:  make(chan *Query),
-	}
-
-	handlers := make(map[string]HandlerFunc)
-	handlers[ADD_BOTTLE_MODE] = func(ctx context.Context, b *Bottle) {}
-	handlers[REQUEST_BOTTLE_MODE] = func(ctx context.Context, b *Bottle) {}
-	handlers[GENERATE_BOTTLE_MODE] = func(ctx context.Context, b *Bottle) {}
-
+func New(cfg *Config, storage *Storage) *Engine {
 	return &Engine{
-		Ctx:        ctx,
-		cancelFunc: cancelFunc,
-		Config:     cfg,
-		Gateway:    gateway,
-		Handlers:   handlers,
+		config:      cfg,
+		storage:     storage,
+		subscribers: make(map[chan *Bottle]struct{}),
 	}
-}
-
-func DefaultEngine() *Engine{
-	cfg := NewConfig()
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	gateway := &Gateway{
-		In:  make(chan *Query),
-	}
-
-	storage := NewStorage()
-
-	handlers := make(map[string]HandlerFunc)
-	handlers[ADD_BOTTLE_MODE] = BottleAddHandler(storage)
-	handlers[REQUEST_BOTTLE_MODE] = BottleGetHandler(storage)
-	handlers[GENERATE_BOTTLE_MODE] = BottleGenerateHandler(storage)
-
-	return &Engine{
-		Ctx:        ctx,
-		cancelFunc: cancelFunc,
-		Config:     cfg,
-		Gateway:    gateway,
-		Handlers:   handlers,
-	}
-}
-
-func (e *Engine) SetConfig(c *Config) {
-	e.Config = c
-}
-
-func (e *Engine) AddHandler(mode string, h HandlerFunc) {
-	e.Handlers[mode] = h
-}
-
-func (e *Engine) Run() {
-	addHandlerCh := make(chan interface{})
-	getHandlerCh := make(chan interface{})
-
-	go func() {
-	Loop:
-		for {
-			select {
-			case <- e.Ctx.Done():
-				break Loop
-			case q := <- e.Gateway.In:
-				if (q.Mode == ADD_BOTTLE_MODE) {
-					addHandlerCh <- q.Data
-				}
-
-				if (q.Mode == REQUEST_BOTTLE_MODE) {
-					getHandlerCh <- q.Data
-				}
-			default:
-				break
-			}
-		}
-	}()
-
-	go func() {
-	Loop:
-		for {
-			select {
-			case <-e.Ctx.Done():
-				break Loop
-			case data := <- addHandlerCh:
-				b, ok := data.(*Bottle)
-				if (!ok) {
-					break
-				}
-				e.Handlers[ADD_BOTTLE_MODE](e.Ctx, b)
-			default:
-				break
-			}
-		}
-		return
-	}()
-
-	go func() {
-	Loop:
-		for {
-			select {
-			case <-e.Ctx.Done():
-				break Loop
-			case data := <- getHandlerCh:
-				ch, ok := data.(chan *Bottle)
-				if (!ok) {
-					break
-				}
-				for {
-					b := &Bottle{}
-					e.Handlers[REQUEST_BOTTLE_MODE](e.Ctx, b)
-					if b.Message == nil {
-						continue
-					} else {
-						go waitSend(ch, b, e.Config.SendBottleDelay)
-						break
-					}
-				}
-			default:
-				break
-			}
-		}
-		return
-	}()
-
-	go func() {
-		t := time.NewTicker(e.Config.GenerateBottleCoolTime)
-		defer t.Stop()
-	Loop:
-		for {
-			select {
-			case <- e.Ctx.Done():
-				break Loop
-			case <-t.C:
-				text := ""
-				b := &Bottle{
-					Message: &Message{
-						Text: text,
-					},
-				}
-				e.Handlers[GENERATE_BOTTLE_MODE](e.Ctx, b)
-			default:
-				break
-			}
-		}
-	}()
 }
 
 func waitSend(ch chan *Bottle, bottle *Bottle, delay time.Duration) {
@@ -196,46 +38,46 @@ func waitSend(ch chan *Bottle, bottle *Bottle, delay time.Duration) {
 	ch <- bottle
 }
 
-func (e *Engine) Stop() {
-	e.cancelFunc()
-}
-
-func (g *Gateway) AddBottle(bottle *Bottle) {
-	q := &Query{
-		Mode: ADD_BOTTLE_MODE,
-		Data: bottle,
+func (e *Engine) AddBottle(b *Bottle) {
+	if err := e.storage.Add(b.Message); err != nil {
+		return
 	}
-	g.In <- q
 }
 
-func (g *Gateway) RequestBottle(ch chan *Bottle) {
-	q := &Query{
-		Mode: REQUEST_BOTTLE_MODE,
-		Data: ch,
-	}
-	g.In <- q
+func (e *Engine) SubscribeBottle(ch chan *Bottle) {
+	e.subscribers[ch] = struct{}{}
 }
 
-func BottleAddHandler(s *Storage) HandlerFunc {
-	return func(ctx context.Context, b *Bottle) {
-		if err := s.Add(b.Message); err != nil {
-			return
+func (e *Engine) Run(ctx context.Context) {
+	go func() {
+		t := time.NewTicker(e.config.SendBottlePeriod)
+		defer t.Stop()
+
+	Loop:
+		for {
+			select {
+			case <- ctx.Done():
+				break Loop
+			case <- t.C:
+				if (len(e.subscribers) == 0) {
+					break
+				}
+
+				for subscriber := range e.subscribers {
+					m, err := e.storage.Get()
+					if err != nil {
+						break
+					}
+
+					b := &Bottle{
+						Message: m,
+					}
+
+					subscriber <- b
+				}
+			default:
+				break
+			}
 		}
-	}
-}
-
-func BottleGetHandler(s *Storage) HandlerFunc {
-	return func(ctx context.Context, b *Bottle) {
-		m, err := s.Get()
-		if err != nil {
-			return
-		}
-		b.Message = m
-	}
-}
-
-func BottleGenerateHandler(s *Storage) HandlerFunc {
-	return func(ctx context.Context, b *Bottle) {
-		s.Add(b.Message)
-	}
+	}()
 }
