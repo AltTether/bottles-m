@@ -10,7 +10,7 @@ import (
 
 
 func TestMessageStorage(t *testing.T) {
-	storage := NewMessageStorage()
+	storage := NewStorage()
 
 	text := "This is a Test Message"
 	message := &Message{
@@ -24,7 +24,7 @@ func TestMessageStorage(t *testing.T) {
 }
 
 func TestGetMessageFromEmptyStorage(t *testing.T) {
-	storage := NewMessageStorage()
+	storage := NewStorage()
 
 	message, err := storage.Get()
 	assert.EqualError(t, err, "No Messages")
@@ -32,7 +32,7 @@ func TestGetMessageFromEmptyStorage(t *testing.T) {
 }
 
 func TestMessageStorageAddAndGetInGoRoutine(t *testing.T) {
-	storage := NewMessageStorage()
+	storage := NewStorage()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cnt := 0
@@ -81,101 +81,4 @@ func TestMessageStorageAddAndGetInGoRoutine(t *testing.T) {
 	cancel()
 
 	assert.Greater(t, cnt, 0)
-}
-
-func TestTokenStorage(t *testing.T) {
-	cfg := NewTestConfig()
-	storage := NewTokenStorage(cfg.TokenExpiration)
-
-	tokenStr := "TesT"
-	token := &Token{
-		Str: tokenStr,
-	}
-
-	_ = storage.Add(token)
-	err := storage.Use(token)
-	assert.Nil(t, err)
-}
-
-func TestTokenStorageAddAndUseInGoRoutine(t *testing.T) {
-	cfg := NewTestConfig()
-	storage := NewTokenStorage(cfg.TokenExpiration)
-
-	gen := NewRandomStringGenerator(cfg.TokenSize, cfg.Seed)
-
-	n := 10
-	for i := 0; i < n; i++ {
-		tokenStr := gen.Generate()
-		go func() {
-			token := &Token{
-				Str: tokenStr,
-			}
-			storage.Add(token)
-		}()
-
-		go func() {
-			token := &Token{
-				Str: tokenStr,
-			}
-			storage.Use(token)
-		}()
-	}
-}
-
-func TestTokenStorageInvalidToken(t *testing.T) {
-	cfg := NewTestConfig()
-	storage := NewTokenStorage(cfg.TokenExpiration)
-
-	tokenStr := "TesT"
-	token := &Token{
-		Str: tokenStr,
-	}
-
-	err := storage.Use(token)
-	assert.EqualError(t, err, "Token is Invalid")
-}
-
-func TestTokenStorageSameToken(t *testing.T) {
-	cfg := NewTestConfig()
-	storage := NewTokenStorage(cfg.TokenExpiration)
-
-	tokenStr1 := "TesT"
-	tokenStr2 := "TesT"
-	token1 := &Token{
-		Str: tokenStr1,
-	}
-	token2 := &Token{
-		Str: tokenStr2,
-	}
-
-	_ = storage.Add(token1)
-	err := storage.Add(token2)
-	assert.EqualError(t, err, "Storage has Same Token")
-}
-
-func TestTokenStorageTokenExpiration(t *testing.T) {
-	cfg := NewTestConfig()
-	storage := NewTokenStorage(cfg.TokenExpiration)
-
-	tokenStr := "TesT"
-	token := &Token{
-		Str: tokenStr,
-	}
-
-	_ = storage.Add(token)
-	time.Sleep(50 * time.Millisecond)
-	err := storage.Use(token)
-
-	assert.EqualError(t, err, "Token is Invalid")
-}
-
-func TestTokenStorageAddNilToken(t *testing.T) {
-	cfg := NewTestConfig()
-	storage := NewTokenStorage(cfg.TokenExpiration)
-
-	token := &Token{}
-
-	err := storage.Add(token)
-
-	assert.EqualError(t, err, "Token is Empty")
 }

@@ -1,7 +1,6 @@
 package bottles
 
 import (
-	"fmt"
 	"time"
 	"testing"
 	"context"
@@ -46,12 +45,9 @@ func TestGetFromMakenChan(t *testing.T) {
 	engine := New(cfg)
 
 	messageStorage := createTestMessageStorageWithMessages(make([]*Message, 0))
-	tokens := make([]*Token, 1)
-	tokens[0] = &Token{ Str: "test_token" }
-	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
 
-	bottleAddHandlerFunc := BottleAddHandler(tokenStorage, messageStorage)
-	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
+	bottleAddHandlerFunc := BottleAddHandler(messageStorage)
+	bottleGetHandlerFunc := BottleGetHandler(messageStorage)
 
 	engine.AddHandler(REQUEST_BOTTLE_MODE, bottleGetHandlerFunc)
 	engine.AddHandler(ADD_BOTTLE_MODE, bottleAddHandlerFunc)
@@ -63,9 +59,6 @@ func TestGetFromMakenChan(t *testing.T) {
 	addedBottle := &Bottle{
 		Message: &Message{
 			Text: "test_text",
-		},
-		Token: &Token{
-			Str: "test_token",
 		},
 	}
 	gateway.AddBottle(addedBottle)
@@ -83,9 +76,8 @@ func TestGenerateEmptyBottle(t *testing.T) {
 	engine := New(cfg)
 
 	messageStorage := createTestMessageStorageWithMessages(make([]*Message, 0))
-	tokenStorage := createTestTokenStorageWithTokens(make([]*Token, 0), cfg.TokenExpiration)
 
-	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
+	bottleGetHandlerFunc := BottleGetHandler(messageStorage)
 	bottleGenerateHandlerFunc := BottleGenerateHandler(messageStorage)
 
 	engine.AddHandler(REQUEST_BOTTLE_MODE, bottleGetHandlerFunc)
@@ -124,11 +116,7 @@ func TestBottleGetDeley(t *testing.T) {
 	messages[0] = &Message{ Text: "test_text" }
 	messageStorage := createTestMessageStorageWithMessages(messages)
 
-	tokens := make([]*Token, 1)
-	tokens[0] = &Token{ Str: "test_token" }
-	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
-
-	bottleGetHandlerFunc := BottleGetHandler(tokenStorage, messageStorage)
+	bottleGetHandlerFunc := BottleGetHandler(messageStorage)
 	engine.AddHandler(REQUEST_BOTTLE_MODE, bottleGetHandlerFunc)
 
 	gateway := engine.Gateway
@@ -150,35 +138,25 @@ func TestBottleGetDeley(t *testing.T) {
 func CreateTestEngine() *Engine {
 	n := 10
 
-	return CreateTestEngineWithData(createTestMessages(n), createTestTokens(n))
+	return CreateTestEngineWithData(createTestMessages(n))
 }
 
-func CreateTestEngineWithData(messages []*Message, tokens []*Token) *Engine {
+func CreateTestEngineWithData(messages []*Message) *Engine {
 	cfg := NewTestConfig()
 	engine := New(cfg)
 
 	messageStorage := createTestMessageStorageWithMessages(messages)
-	tokenStorage := createTestTokenStorageWithTokens(tokens, cfg.TokenExpiration)
 
-	engine.AddHandler(REQUEST_BOTTLE_MODE, BottleGetHandler(tokenStorage, messageStorage))
-	engine.AddHandler(ADD_BOTTLE_MODE, BottleAddHandler(tokenStorage, messageStorage))
+	engine.AddHandler(REQUEST_BOTTLE_MODE, BottleGetHandler(messageStorage))
+	engine.AddHandler(ADD_BOTTLE_MODE, BottleAddHandler(messageStorage))
 
 	return engine
 }
 
-func createTestMessageStorageWithMessages(ms []*Message) *MessageStorage{
-	s := NewMessageStorage()
+func createTestMessageStorageWithMessages(ms []*Message) *Storage{
+	s := NewStorage()
 	for _, m := range ms {
 		_ = s.Add(m)
-	}
-
-	return s
-}
-
-func createTestTokenStorageWithTokens(ts []*Token, expiration time.Duration) *TokenStorage {
-	s := NewTokenStorage(expiration)
-	for _, t := range ts {
-		_ = s.Add(t)
 	}
 
 	return s
@@ -194,16 +172,4 @@ func createTestMessages(n int) []*Message {
 	}
 
 	return ms
-}
-
-func createTestTokens(n int) []*Token {
-	ts := make([]*Token, n)
-	for i := 0; i < n; i++ {
-		str := fmt.Sprintf("test%d", i)
-		ts[i] = &Token{
-			Str: str,
-		}
-	}
-
-	return ts
 }
