@@ -1,7 +1,6 @@
 package bottles
 
 import (
-	"fmt"
 	"time"
 	"testing"
 	"context"
@@ -173,16 +172,4 @@ func createTestMessages(n int) []*Message {
 	}
 
 	return ms
-}
-
-func createTestTokens(n int) []*Token {
-	ts := make([]*Token, n)
-	for i := 0; i < n; i++ {
-		str := fmt.Sprintf("test%d", i)
-		ts[i] = &Token{
-			Str: str,
-		}
-	}
-
-	return ts
 }
