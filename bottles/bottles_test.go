@@ -31,8 +31,8 @@ func TestGetFromMakenChan(t *testing.T) {
 	defer cancelFunc()
 
 	addedBottle := &Bottle{
-		Message: &Message{
-			Text: "test_text",
+		message: &Message{
+			text: "test_text",
 		},
 	}
 	engine.AddBottle(addedBottle)
@@ -42,13 +42,13 @@ func TestGetFromMakenChan(t *testing.T) {
 
 	gotenBottle := <-bottleOutCh
 
-	assert.Equal(t, gotenBottle.Message.Text, "test_text")
+	assert.Equal(t, gotenBottle.Message().Text(), "test_text")
 }
 
 func TestBottleGetDeley(t *testing.T) {
 	cfg := NewTestConfig()
 	messages := make([]*Message, 1)
-	messages[0] = &Message{ Text: "test_text" }
+	messages[0] = &Message{ text: "test_text" }
 	storage := createTestMessageStorageWithMessages(messages)
 	engine := New(cfg, storage)
 
@@ -95,7 +95,7 @@ func createTestMessages(n int) []*Message {
 	for i := 0; i < n; i++ {
 		text := "test"
 		ms[i] = &Message{
-			Text: text,
+			text: text,
 		}
 	}
 

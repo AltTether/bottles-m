@@ -7,11 +7,11 @@ import (
 
 
 type Message struct {
-	Text string
+	text string
 }
 
 type Bottle struct {
-	Message *Message
+	message *Message
 }
 
 type Engine struct {
@@ -25,6 +25,14 @@ type MessageKeeper interface {
 	Add(*Message) error
 }
 
+func (m *Message) Text() string {
+	return m.text
+}
+
+func (b *Bottle) Message() *Message {
+	return b.message
+}
+
 func New(cfg *Config, storage MessageKeeper) *Engine {
 	return &Engine{
 		config:      cfg,
@@ -34,7 +42,7 @@ func New(cfg *Config, storage MessageKeeper) *Engine {
 }
 
 func (e *Engine) AddBottle(b *Bottle) {
-	if err := e.storage.Add(b.Message); err != nil {
+	if err := e.storage.Add(b.Message()); err != nil {
 		return
 	}
 }
@@ -65,7 +73,7 @@ func (e *Engine) Run(ctx context.Context) {
 					}
 
 					b := &Bottle{
-						Message: m,
+						message: m,
 					}
 
 					subscriber <- b

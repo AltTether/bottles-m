@@ -14,13 +14,13 @@ func TestMessageStorage(t *testing.T) {
 
 	text := "This is a Test Message"
 	message := &Message{
-		Text: text,
+		text: text,
 	}
 	
 	_ = storage.Add(message)
 	messageFromStorage, _ := storage.Get()
 
-	assert.Equal(t, messageFromStorage.Text, text)
+	assert.Equal(t, messageFromStorage.Text(), text)
 }
 
 func TestGetMessageFromEmptyStorage(t *testing.T) {
@@ -49,7 +49,7 @@ func TestMessageStorageAddAndGetInGoRoutine(t *testing.T) {
 				case <-ticker.C:
 					text := "This is a Test Message"
 					message := &Message{
-						Text: text,
+						text: text,
 					}
 					storage.Add(message)
 				default:
