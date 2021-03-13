@@ -5,11 +5,6 @@ import (
 	"context"
 )
 
-const (
-	ADD_BOTTLE_MODE = "add_bottle"
-	REQUEST_BOTTLE_MODE = "request_bottle"
-	GENERATE_BOTTLE_MODE = "generate_bottle"
-)
 
 type Message struct {
 	Text string
@@ -33,10 +28,6 @@ func New(cfg *Config, storage *Storage) *Engine {
 	}
 }
 
-func waitSend(ch chan *Bottle, bottle *Bottle, delay time.Duration) {
-	time.Sleep(delay)
-	ch <- bottle
-}
 
 func (e *Engine) AddBottle(b *Bottle) {
 	if err := e.storage.Add(b.Message); err != nil {
