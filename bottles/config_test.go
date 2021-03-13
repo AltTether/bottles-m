@@ -6,8 +6,8 @@ import (
 
 func NewTestConfig() *Config {
 	return &Config{
-		Seed:                   42,
-		SendBottleDelay:        time.Duration(15 * time.Millisecond),
-		GenerateBottleCoolTime: time.Duration(10 * time.Millisecond),
+		Seed:                    42,
+		SendBottlePeriod:        time.Duration(15 * time.Millisecond),
+		GenerateBottleCoolTime:  time.Duration(10 * time.Millisecond),
 	}
 }
