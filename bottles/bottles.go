@@ -16,18 +16,22 @@ type Bottle struct {
 
 type Engine struct {
 	config      *Config
-	storage     *Storage
+	storage     MessageKeeper
 	subscribers map[chan *Bottle]struct{}
 }
 
-func New(cfg *Config, storage *Storage) *Engine {
+type MessageKeeper interface {
+	Get() (*Message, error)
+	Add(*Message) error
+}
+
+func New(cfg *Config, storage MessageKeeper) *Engine {
 	return &Engine{
 		config:      cfg,
 		storage:     storage,
 		subscribers: make(map[chan *Bottle]struct{}),
 	}
 }
-
 
 func (e *Engine) AddBottle(b *Bottle) {
 	if err := e.storage.Add(b.Message); err != nil {
